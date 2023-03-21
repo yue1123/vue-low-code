@@ -42,6 +42,7 @@ importers:
       '@interactjs/interactjs': ^1.10.17
       '@interactjs/modifiers': ^1.10.17
       '@interactjs/types': ^1.10.17
+      '@rollup/plugin-alias': ^4.0.3
       '@types/node': ^18.15.3
       debug: ^4.3.4
       element-resize-detector: ^1.2.4
@@ -64,6 +65,7 @@ importers:
       vue: 3.2.47
     devDependencies:
       '@interactjs/types': 1.10.17
+      '@rollup/plugin-alias': 4.0.3_rollup@3.19.1
       '@types/node': 18.15.3
       debug: 4.3.4
       esbuild: 0.17.12
@@ -969,6 +971,19 @@ packages:
     resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
     dev: false
 
+  /@rollup/plugin-alias/4.0.3_rollup@3.19.1:
+    resolution: {integrity: sha512-ZuDWE1q4PQDhvm/zc5Prun8sBpLJy41DMptYrS6MhAy9s9kL/doN1613BWfEchGVfKxzliJ3BjbOPizXX38DbQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+    dependencies:
+      rollup: 3.19.1
+      slash: 4.0.0
+    dev: true
+
   /@types/element-resize-detector/1.1.3:
     resolution: {integrity: sha512-rqmeHxzNMPar/3IbdQRm+mydv8KlEXUtcp5M47rbZUEjslTjg+bT5+OXCknTCIy1AfvNR0Kio44iMY2zUH65CQ==}
     dev: false
@@ -1622,6 +1637,11 @@ packages:
   /seemly/0.3.6:
     resolution: {integrity: sha512-lEV5VB8BUKTo/AfktXJcy+JeXns26ylbMkIUco8CYREsQijuz4mrXres2Q+vMLdwkuLxJdIPQ8IlCIxLYm71Yw==}
     dev: false
+
+  /slash/4.0.0:
+    resolution: {integrity: sha512-3dOsAHXXUkQTpOYcoAxLIorMTp4gIQr5IW3iVb7A7lFIp0VHhnynm9izx6TssdrIcVIESAlVjtnO2K8bg+Coew==}
+    engines: {node: '>=12'}
+    dev: true
 
   /source-map-js/1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}

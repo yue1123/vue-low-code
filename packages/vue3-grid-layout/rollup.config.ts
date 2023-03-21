@@ -9,6 +9,7 @@ import resolve from 'rollup-plugin-node-resolve'
 import vue from 'rollup-plugin-vue'
 import typescript from 'rollup-plugin-typescript'
 import pkg from './package.json'
+import alias from '@rollup/plugin-alias'
 
 const baseConfig = defineConfig({
 	external(id) {
@@ -25,11 +26,16 @@ const baseConfig = defineConfig({
 		// }),
 		typescript(),
 		vue(),
-		resolve()
+		resolve(),
 		// babel({
 		// 	exclude: 'node_modules/**',
 		// 	babelHelpers: 'bundled'
 		// })
+		alias({
+			entries: [
+				{ find: '@', replacement: './src' }
+			]
+		})
 	],
 	output: {
 		file: 'dist/index.esm.js',
