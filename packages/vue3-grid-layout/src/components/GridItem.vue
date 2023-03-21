@@ -11,7 +11,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, inject, computed, useSlots } from 'vue'
 import { setTopLeft, setTopRight, setTransformRtl, setTransform } from '@/helpers/utils'
 import { getControlPosition, createCoreData } from '@/helpers/draggableUtils'
 import { getColsFromBreakpoint } from '@/helpers/responsiveUtils'
@@ -26,7 +26,7 @@ import '@interactjs/modifiers'
 import '@interactjs/dev-tools'
 import interact from '@interactjs/interact'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   isDraggable?: boolean
   isResizable?: boolean
   isBounded?: boolean
@@ -59,875 +59,501 @@ withDefaults(defineProps<{
 })
 
 const eventBus = inject('eventBus')
-const layout = inject('layout')
+const layout = inject<Layout>('layout')
+
+const slots = useSlots()
+
+const emits = defineEmits<{
+  (e: 'containerResized', i: string, h: number, w: number, h2: number, w2: number): void
+  (e: 'resize', i: string, h: number, w: number, h2: number, w2: number): void
+  (e: 'resized', i: string, h: number, w: number, h2: number, w2: number): void
+}>()
+
+let interactObj
+
+// #region Refs
+const itemRef = ref()
+// #endregion
+
+// #region
+const cols = ref<number>(1)
+const containerWidth = ref<number>(100)
+const rowHeight = ref<number>(30)
+const margin = ref<number[]>([10, 10])
+const maxRows = ref<number>(Infinity)
+const draggable = ref<any>(null)
+const resizable = ref<any>(null)
+const transformScale = ref<number>(1)
+const useCssTransforms = ref<boolean>(true)
+const useStyleCursor = ref<boolean>(true)
+const isDragging = ref<boolean>(false)
+const dragging = ref<{ top: number, left: number }>({ top: 0, left: 0 })
+const isResizing = ref<boolean>(false)
+const resizing = ref<{ width: number, height: number } | null>(null)
+const lastX = ref<number>(NaN)
+const lastY = ref<number>(NaN)
+const lastW = ref<number>(NaN)
+const lastH = ref<number>(NaN)
+const style = ref<Record<string, any>>({})
+const rtl = ref<boolean>(false)
+const dragEventSet = ref<boolean>(false)
+const resizeEventSet = ref<boolean>(false)
+const previousW = ref<any>(null)
+const previousH = ref<any>(null)
+const previousX = ref<any>(null)
+const previousY = ref<any>(null)
+const innerX = ref<number>(props.x)
+const innerY = ref<number>(props.y)
+const innerW = ref<number>(props.w)
+const innerH = ref<number>(props.h)
+// #endregion
 
 /**
- * data
+ * computed
  */
-const cols = ref
+const resizableAndNotStatic = computed(() => resizable.value && props.static)
+const draggableOrResizableAndNotStatic = computed(() => {
+  return (draggable.value || resizable.value) && props.static
+})
+const isAndroid = computed(() => navigator.userAgent.toLowerCase().indexOf("android") !== -1)
+const renderRtl = computed(() => {
+  return (layout.isMirrored) ? !rtl.value : rtl.value
+})
+const resizableHandleClass = computed(() => {
+  let baseClassname = 'vue-resizable-handle'
 
+  if (renderRtl.value) {
+    baseClassname += ' vue-rtl-resizable-handle'
+  }
 
-export default {
-  name: 'GridItem',
-  props: {
-    /* cols: {
-     type: Number,
-     required: true
-     }, */
-    /* containerWidth: {
-     type: Number,
-     required: true
+  return baseClassname
+})
+const classObj = computed(() => ({
+  'vue-resizable': resizableAndNotStatic.value,
+  static: props.static,
+  resizing: isResizing.value,
+  'vue-draggable-dragging': isDragging.value,
+  cssTransforms: useCssTransforms.value,
+  'render-rtl': renderRtl.value,
+  'disable-userselect': isDragging.value,
+  'no-touch': isAndroid.value && draggableOrResizableAndNotStatic.value
+}))
 
-     },
-     rowHeight: {
-     type: Number,
-     required: true
-     },
-     margin: {
-     type: Array,
-     required: true
-     },
-     maxRows: {
-     type: Number,
-     required: true
-     }, */
-    isDraggable: {
-      type: Boolean,
-      required: false,
-      default: null
-    },
-    isResizable: {
-      type: Boolean,
-      required: false,
-      default: null
-    },
-    isBounded: {
-      type: Boolean,
-      required: false,
-      default: null
-    },
-    /* useCssTransforms: {
-     type: Boolean,
-     required: true
-     },
-     */
-    static: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    minH: {
-      type: Number,
-      required: false,
-      default: 1
-    },
-    minW: {
-      type: Number,
-      required: false,
-      default: 1
-    },
-    maxH: {
-      type: Number,
-      required: false,
-      default: Infinity
-    },
-    maxW: {
-      type: Number,
-      required: false,
-      default: Infinity
-    },
-    x: {
-      type: Number,
-      required: true
-    },
-    y: {
-      type: Number,
-      required: true
-    },
-    w: {
-      type: Number,
-      required: true
-    },
-    h: {
-      type: Number,
-      required: true
-    },
-    i: {
-      required: true
-    },
-    dragIgnoreFrom: {
-      type: String,
-      required: false,
-      default: 'a, button'
-    },
-    dragAllowFrom: {
-      type: String,
-      required: false,
-      default: null
-    },
-    resizeIgnoreFrom: {
-      type: String,
-      required: false,
-      default: 'a, button'
-    },
-    preserveAspectRatio: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    dragOption: {
-      type: Object,
-      required: false,
-      default: () => ({})
-    },
-    resizeOption: {
-      type: Object,
-      required: false,
-      default: () => ({})
-    }
-  },
-  inject: ['eventBus', 'layout'],
-  data: function () {
-    return {
-      cols: 1,
-      containerWidth: 100,
-      rowHeight: 30,
-      margin: [10, 10],
-      maxRows: Infinity,
-      draggable: null,
-      resizable: null,
-      transformScale: 1,
-      useCssTransforms: true,
-      useStyleCursor: true,
+// #region Methods
+function createStyle() {
+  if (props.x + props.w > cols.value) {
+    innerX.value = 0
+    innerW.value = (props.w > cols.value) ? cols.value : props.w
+  } else {
+    innerX.value = props.x
+    innerW.value = props.w
+  }
 
-      isDragging: false,
-      dragging: null,
-      isResizing: false,
-      resizing: null,
-      lastX: NaN,
-      lastY: NaN,
-      lastW: NaN,
-      lastH: NaN,
-      style: {},
-      rtl: false,
+  let pos = calcPosition(innerX.value, innerY.value, innerW.value, innerH.value)
 
-      dragEventSet: false,
-      resizeEventSet: false,
+  if (isDragging.value) {
+    pos.top = dragging.value.top
 
-      previousW: null,
-      previousH: null,
-      previousX: null,
-      previousY: null,
-      innerX: this.x,
-      innerY: this.y,
-      innerW: this.w,
-      innerH: this.h
-    }
-  },
-  created () {
-    const self = this
-
-    // Accessible refernces of functions for removing in beforeDestroy
-    self.updateWidthHandler = function (width) {
-      self.updateWidth(width)
-    }
-
-    self.compactHandler = function (layout) {
-      self.compact(layout)
-    }
-
-    self.setDraggableHandler = function (isDraggable) {
-      if (self.isDraggable === null) {
-        self.draggable = isDraggable
-      }
-    }
-
-    self.setResizableHandler = function (isResizable) {
-      if (self.isResizable === null) {
-        self.resizable = isResizable
-      }
-    }
-
-    self.setBoundedHandler = function (isBounded) {
-      if (self.isBounded === null) {
-        self.bounded = isBounded
-      }
-    }
-
-    self.setTransformScaleHandler = function (transformScale) {
-      self.transformScale = transformScale
-    }
-
-    self.setRowHeightHandler = function (rowHeight) {
-      self.rowHeight = rowHeight
-    }
-
-    self.setMaxRowsHandler = function (maxRows) {
-      self.maxRows = maxRows
-    }
-
-    self.directionchangeHandler = () => {
-      this.rtl = getDocumentDir() === 'rtl'
-      this.compact()
-    }
-
-    self.setColNum = (colNum) => {
-      self.cols = parseInt(colNum)
-    }
-
-    this.eventBus.$on('updateWidth', self.updateWidthHandler)
-    this.eventBus.$on('compact', self.compactHandler)
-    this.eventBus.$on('setDraggable', self.setDraggableHandler)
-    this.eventBus.$on('setResizable', self.setResizableHandler)
-    this.eventBus.$on('setBounded', self.setBoundedHandler)
-    this.eventBus.$on('setTransformScale', self.setTransformScaleHandler)
-    this.eventBus.$on('setRowHeight', self.setRowHeightHandler)
-    this.eventBus.$on('setMaxRows', self.setMaxRowsHandler)
-    this.eventBus.$on('directionchange', self.directionchangeHandler)
-    this.eventBus.$on('setColNum', self.setColNum)
-
-    this.rtl = getDocumentDir() === 'rtl'
-  },
-  beforeDestroy: function () {
-    const self = this
-    // Remove listeners
-    this.eventBus.$off('updateWidth', self.updateWidthHandler)
-    this.eventBus.$off('compact', self.compactHandler)
-    this.eventBus.$off('setDraggable', self.setDraggableHandler)
-    this.eventBus.$off('setResizable', self.setResizableHandler)
-    this.eventBus.$off('setBounded', self.setBoundedHandler)
-    this.eventBus.$off('setTransformScale', self.setTransformScaleHandler)
-    this.eventBus.$off('setRowHeight', self.setRowHeightHandler)
-    this.eventBus.$off('setMaxRows', self.setMaxRowsHandler)
-    this.eventBus.$off('directionchange', self.directionchangeHandler)
-    this.eventBus.$off('setColNum', self.setColNum)
-    if (this.interactObj) {
-      this.interactObj.unset() // destroy interact intance
-    }
-  },
-  mounted: function () {
-    if (this.layout.responsive && this.layout.lastBreakpoint) {
-      this.cols = getColsFromBreakpoint(this.layout.lastBreakpoint, this.layout.cols)
+    if (renderRtl.value) {
+      pos.right = dragging.value.left
     } else {
-      this.cols = this.layout.colNum
-    }
-    this.rowHeight = this.layout.rowHeight
-    this.containerWidth = this.layout.width !== null ? this.layout.width : 100
-    this.margin = this.layout.margin !== undefined ? this.layout.margin : [10, 10]
-    this.maxRows = this.layout.maxRows
-
-    if (this.isDraggable === null) {
-      this.draggable = this.layout.isDraggable
-    } else {
-      this.draggable = this.isDraggable
-    }
-    if (this.isResizable === null) {
-      this.resizable = this.layout.isResizable
-    } else {
-      this.resizable = this.isResizable
-    }
-    if (this.isBounded === null) {
-      this.bounded = this.layout.isBounded
-    } else {
-      this.bounded = this.isBounded
-    }
-    this.transformScale = this.layout.transformScale
-    this.useCssTransforms = this.layout.useCssTransforms
-    this.useStyleCursor = this.layout.useStyleCursor
-    this.createStyle()
-  },
-  watch: {
-    isDraggable: function () {
-      this.draggable = this.isDraggable
-    },
-    static: function () {
-      this.tryMakeDraggable()
-      this.tryMakeResizable()
-    },
-    draggable: function () {
-      this.tryMakeDraggable()
-    },
-    isResizable: function () {
-      this.resizable = this.isResizable
-    },
-    isBounded: function () {
-      this.bounded = this.isBounded
-    },
-    resizable: function () {
-      this.tryMakeResizable()
-    },
-    rowHeight: function () {
-      this.createStyle()
-      this.emitContainerResized()
-    },
-    cols: function () {
-      this.tryMakeResizable()
-      this.createStyle()
-      this.emitContainerResized()
-    },
-    containerWidth: function () {
-      this.tryMakeResizable()
-      this.createStyle()
-      this.emitContainerResized()
-    },
-    x: function (newVal) {
-      this.innerX = newVal
-      this.createStyle()
-    },
-    y: function (newVal) {
-      this.innerY = newVal
-      this.createStyle()
-    },
-    h: function (newVal) {
-      this.innerH = newVal
-      this.createStyle()
-      // this.emitContainerResized();
-    },
-    w: function (newVal) {
-      this.innerW = newVal
-      this.createStyle()
-      // this.emitContainerResized();
-    },
-    renderRtl: function () {
-      // console.log("### renderRtl");
-      this.tryMakeResizable()
-      this.createStyle()
-    },
-    minH: function () {
-      this.tryMakeResizable()
-    },
-    maxH: function () {
-      this.tryMakeResizable()
-    },
-    minW: function () {
-      this.tryMakeResizable()
-    },
-    maxW: function () {
-      this.tryMakeResizable()
-    },
-    '$parent.margin': function (margin) {
-      if (!margin || (margin[0] == this.margin[0] && margin[1] == this.margin[1])) {
-        return
-      }
-      this.margin = margin.map(m => Number(m))
-      this.createStyle()
-      this.emitContainerResized()
-    }
-  },
-  computed: {
-    classObj () {
-      return {
-        'vue-resizable': this.resizableAndNotStatic,
-        static: this.static,
-        resizing: this.isResizing,
-        'vue-draggable-dragging': this.isDragging,
-        cssTransforms: this.useCssTransforms,
-        'render-rtl': this.renderRtl,
-        'disable-userselect': this.isDragging,
-        'no-touch': this.isAndroid && this.draggableOrResizableAndNotStatic
-      }
-    },
-    resizableAndNotStatic () {
-      return this.resizable && !this.static
-    },
-    draggableOrResizableAndNotStatic () {
-      return (this.draggable || this.resizable) && !this.static
-    },
-    isAndroid () {
-      return navigator.userAgent.toLowerCase().indexOf('android') !== -1
-    },
-    renderRtl () {
-      return (this.layout.isMirrored) ? !this.rtl : this.rtl
-    },
-    resizableHandleClass () {
-      if (this.renderRtl) {
-        return 'vue-resizable-handle vue-rtl-resizable-handle'
-      } else {
-        return 'vue-resizable-handle'
-      }
-    }
-  },
-  methods: {
-    createStyle: function () {
-      if (this.x + this.w > this.cols) {
-        this.innerX = 0
-        this.innerW = (this.w > this.cols) ? this.cols : this.w
-      } else {
-        this.innerX = this.x
-        this.innerW = this.w
-      }
-      const pos = this.calcPosition(this.innerX, this.innerY, this.innerW, this.innerH)
-
-      if (this.isDragging) {
-        pos.top = this.dragging.top
-        //                    Add rtl support
-        if (this.renderRtl) {
-          pos.right = this.dragging.left
-        } else {
-          pos.left = this.dragging.left
-        }
-      }
-      if (this.isResizing) {
-        pos.width = this.resizing.width
-        pos.height = this.resizing.height
-      }
-
-      let style
-      // CSS Transforms support (default)
-      if (this.useCssTransforms) {
-        //                    Add rtl support
-        if (this.renderRtl) {
-          style = setTransformRtl(pos.top, pos.right, pos.width, pos.height)
-        } else {
-          style = setTransform(pos.top, pos.left, pos.width, pos.height)
-        }
-      } else { // top,left (slow)
-        //                    Add rtl support
-        if (this.renderRtl) {
-          style = setTopRight(pos.top, pos.right, pos.width, pos.height)
-        } else {
-          style = setTopLeft(pos.top, pos.left, pos.width, pos.height)
-        }
-      }
-      this.style = style
-    },
-    emitContainerResized () {
-      // this.style has width and height with trailing 'px'. The
-      // resized event is without them
-      const styleProps = {}
-      for (const prop of ['width', 'height']) {
-        const val = this.style[prop]
-        const matches = val.match(/^(\d+)px$/)
-        if (!matches) { return }
-        styleProps[prop] = matches[1]
-      }
-      this.$emit('container-resized', this.i, this.h, this.w, styleProps.height, styleProps.width)
-    },
-    handleResize: function (event) {
-      if (this.static) return
-      const position = getControlPosition(event)
-      // Get the current drag point from the event. This is used as the offset.
-      if (position == null) return // not possible but satisfies flow
-      const { x, y } = position
-
-      const newSize = { width: 0, height: 0 }
-      let pos
-      switch (event.type) {
-        case 'resizestart': {
-          this.tryMakeResizable()
-          this.previousW = this.innerW
-          this.previousH = this.innerH
-          pos = this.calcPosition(this.innerX, this.innerY, this.innerW, this.innerH)
-          newSize.width = pos.width
-          newSize.height = pos.height
-          this.resizing = newSize
-          this.isResizing = true
-          break
-        }
-        case 'resizemove': {
-          //                        console.log("### resize => " + event.type + ", lastW=" + this.lastW + ", lastH=" + this.lastH);
-          const coreEvent = createCoreData(this.lastW, this.lastH, x, y)
-          if (this.renderRtl) {
-            newSize.width = this.resizing.width - coreEvent.deltaX / this.transformScale
-          } else {
-            newSize.width = this.resizing.width + coreEvent.deltaX / this.transformScale
-          }
-          newSize.height = this.resizing.height + coreEvent.deltaY / this.transformScale
-
-          /// console.log("### resize => " + event.type + ", deltaX=" + coreEvent.deltaX + ", deltaY=" + coreEvent.deltaY);
-          this.resizing = newSize
-          break
-        }
-        case 'resizeend': {
-          // console.log("### resize end => x=" +this.innerX + " y=" + this.innerY + " w=" + this.innerW + " h=" + this.innerH);
-          pos = this.calcPosition(this.innerX, this.innerY, this.innerW, this.innerH)
-          newSize.width = pos.width
-          newSize.height = pos.height
-          //                        console.log("### resize end => " + JSON.stringify(newSize));
-          this.resizing = null
-          this.isResizing = false
-          break
-        }
-      }
-
-      // Get new WH
-      pos = this.calcWH(newSize.height, newSize.width)
-      if (pos.w < this.minW) {
-        pos.w = this.minW
-      }
-      if (pos.w > this.maxW) {
-        pos.w = this.maxW
-      }
-      if (pos.h < this.minH) {
-        pos.h = this.minH
-      }
-      if (pos.h > this.maxH) {
-        pos.h = this.maxH
-      }
-
-      if (pos.h < 1) {
-        pos.h = 1
-      }
-      if (pos.w < 1) {
-        pos.w = 1
-      }
-
-      this.lastW = x
-      this.lastH = y
-
-      if (this.innerW !== pos.w || this.innerH !== pos.h) {
-        this.$emit('resize', this.i, pos.h, pos.w, newSize.height, newSize.width)
-      }
-      if (event.type === 'resizeend' && (this.previousW !== this.innerW || this.previousH !== this.innerH)) {
-        this.$emit('resized', this.i, pos.h, pos.w, newSize.height, newSize.width)
-      }
-      this.eventBus.$emit('resizeEvent', event.type, this.i, this.innerX, this.innerY, pos.h, pos.w)
-    },
-    handleDrag (event) {
-      if (this.static) return
-      if (this.isResizing) return
-
-      const position = getControlPosition(event)
-
-      // Get the current drag point from the event. This is used as the offset.
-      if (position === null) return // not possible but satisfies flow
-      const { x, y } = position
-
-      // let shouldUpdate = false;
-      const newPosition = { top: 0, left: 0 }
-      switch (event.type) {
-        case 'dragstart': {
-          this.previousX = this.innerX
-          this.previousY = this.innerY
-
-          const parentRect = event.target.offsetParent.getBoundingClientRect()
-          const clientRect = event.target.getBoundingClientRect()
-
-          const cLeft = clientRect.left / this.transformScale
-          const pLeft = parentRect.left / this.transformScale
-          const cRight = clientRect.right / this.transformScale
-          const pRight = parentRect.right / this.transformScale
-          const cTop = clientRect.top / this.transformScale
-          const pTop = parentRect.top / this.transformScale
-
-          if (this.renderRtl) {
-            newPosition.left = (cRight - pRight) * -1
-          } else {
-            newPosition.left = cLeft - pLeft
-          }
-          newPosition.top = cTop - pTop
-          this.dragging = newPosition
-          this.isDragging = true
-          break
-        }
-        case 'dragend': {
-          if (!this.isDragging) return
-          const parentRect = event.target.offsetParent.getBoundingClientRect()
-          const clientRect = event.target.getBoundingClientRect()
-
-          const cLeft = clientRect.left / this.transformScale
-          const pLeft = parentRect.left / this.transformScale
-          const cRight = clientRect.right / this.transformScale
-          const pRight = parentRect.right / this.transformScale
-          const cTop = clientRect.top / this.transformScale
-          const pTop = parentRect.top / this.transformScale
-
-          //                        Add rtl support
-          if (this.renderRtl) {
-            newPosition.left = (cRight - pRight) * -1
-          } else {
-            newPosition.left = cLeft - pLeft
-          }
-          newPosition.top = cTop - pTop
-          //                        console.log("### drag end => " + JSON.stringify(newPosition));
-          //                        console.log("### DROP: " + JSON.stringify(newPosition));
-          this.dragging = null
-          this.isDragging = false
-          // shouldUpdate = true;
-          break
-        }
-        case 'dragmove': {
-          const coreEvent = createCoreData(this.lastX, this.lastY, x, y)
-          //                        Add rtl support
-          if (this.renderRtl) {
-            newPosition.left = this.dragging.left - coreEvent.deltaX / this.transformScale
-          } else {
-            newPosition.left = this.dragging.left + coreEvent.deltaX / this.transformScale
-          }
-          newPosition.top = this.dragging.top + coreEvent.deltaY / this.transformScale
-          if (this.bounded) {
-            const bottomBoundary = event.target.offsetParent.clientHeight - this.calcGridItemWHPx(this.h, this.rowHeight, this.margin[1])
-            newPosition.top = this.clamp(newPosition.top, 0, bottomBoundary)
-            const colWidth = this.calcColWidth()
-            const rightBoundary = this.containerWidth - this.calcGridItemWHPx(this.w, colWidth, this.margin[0])
-            newPosition.left = this.clamp(newPosition.left, 0, rightBoundary)
-          }
-          //                        console.log("### drag => " + event.type + ", x=" + x + ", y=" + y);
-          //                        console.log("### drag => " + event.type + ", deltaX=" + coreEvent.deltaX + ", deltaY=" + coreEvent.deltaY);
-          //                        console.log("### drag end => " + JSON.stringify(newPosition));
-          this.dragging = newPosition
-          break
-        }
-      }
-
-      // Get new XY
-      let pos
-      if (this.renderRtl) {
-        pos = this.calcXY(newPosition.top, newPosition.left)
-      } else {
-        pos = this.calcXY(newPosition.top, newPosition.left)
-      }
-
-      this.lastX = x
-      this.lastY = y
-
-      if (this.innerX !== pos.x || this.innerY !== pos.y) {
-        this.$emit('move', this.i, pos.x, pos.y)
-      }
-      if (event.type === 'dragend' && (this.previousX !== this.innerX || this.previousY !== this.innerY)) {
-        this.$emit('moved', this.i, pos.x, pos.y)
-      }
-      this.eventBus.$emit('dragEvent', event.type, this.i, pos.x, pos.y, this.innerH, this.innerW)
-    },
-    calcPosition: function (x, y, w, h) {
-      const colWidth = this.calcColWidth()
-      // add rtl support
-      let out
-      if (this.renderRtl) {
-        out = {
-          right: Math.round(colWidth * x + (x + 1) * this.margin[0]),
-          top: Math.round(this.rowHeight * y + (y + 1) * this.margin[1]),
-          // 0 * Infinity === NaN, which causes problems with resize constriants;
-          // Fix this if it occurs.
-          // Note we do it here rather than later because Math.round(Infinity) causes deopt
-          width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * this.margin[0]),
-          height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
-        }
-      } else {
-        out = {
-          left: Math.round(colWidth * x + (x + 1) * this.margin[0]),
-          top: Math.round(this.rowHeight * y + (y + 1) * this.margin[1]),
-          // 0 * Infinity === NaN, which causes problems with resize constriants;
-          // Fix this if it occurs.
-          // Note we do it here rather than later because Math.round(Infinity) causes deopt
-          width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * this.margin[0]),
-          height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
-        }
-      }
-
-      return out
-    },
-    /**
-     * Translate x and y coordinates from pixels to grid units.
-     * @param  {Number} top  Top position (relative to parent) in pixels.
-     * @param  {Number} left Left position (relative to parent) in pixels.
-     * @return {Object} x and y in grid units.
-     */
-    // TODO check if this function needs change in order to support rtl.
-    calcXY (top, left) {
-      const colWidth = this.calcColWidth()
-
-      // left = colWidth * x + margin * (x + 1)
-      // l = cx + m(x+1)
-      // l = cx + mx + m
-      // l - m = cx + mx
-      // l - m = x(c + m)
-      // (l - m) / (c + m) = x
-      // x = (left - margin) / (coldWidth + margin)
-      let x = Math.round((left - this.margin[0]) / (colWidth + this.margin[0]))
-      let y = Math.round((top - this.margin[1]) / (this.rowHeight + this.margin[1]))
-
-      // Capping
-      x = Math.max(Math.min(x, this.cols - this.innerW), 0)
-      y = Math.max(Math.min(y, this.maxRows - this.innerH), 0)
-
-      return { x, y }
-    },
-    // Helper for generating column width
-    calcColWidth () {
-      const colWidth = (this.containerWidth - (this.margin[0] * (this.cols + 1))) / this.cols
-      // console.log("### COLS=" + this.cols + " COL WIDTH=" + colWidth + " MARGIN " + this.margin[0]);
-      return colWidth
-    },
-    // This can either be called:
-    // calcGridItemWHPx(w, colWidth, margin[0])
-    // or
-    // calcGridItemWHPx(h, rowHeight, margin[1])
-    calcGridItemWHPx (gridUnits, colOrRowSize, marginPx) {
-      // 0 * Infinity === NaN, which causes problems with resize contraints
-      if (!Number.isFinite(gridUnits)) return gridUnits
-      return Math.round(
-        colOrRowSize * gridUnits + Math.max(0, gridUnits - 1) * marginPx
-      )
-    },
-
-    // Similar to _.clamp
-    clamp (num, lowerBound, upperBound) {
-      return Math.max(Math.min(num, upperBound), lowerBound)
-    },
-
-    /**
-     * Given a height and width in pixel values, calculate grid units.
-     * @param  {Number} height Height in pixels.
-     * @param  {Number} width  Width in pixels.
-     * @param  {Boolean} autoSizeFlag  function autoSize identifier.
-     * @return {Object} w, h as grid units.
-     */
-    calcWH (height, width, autoSizeFlag = false) {
-      const colWidth = this.calcColWidth()
-
-      // width = colWidth * w - (margin * (w - 1))
-      // ...
-      // w = (width + margin) / (colWidth + margin)
-      let w = Math.round((width + this.margin[0]) / (colWidth + this.margin[0]))
-      let h = 0
-      if (!autoSizeFlag) {
-        h = Math.round((height + this.margin[1]) / (this.rowHeight + this.margin[1]))
-      } else {
-        h = Math.ceil((height + this.margin[1]) / (this.rowHeight + this.margin[1]))
-      }
-
-      // Capping
-      w = Math.max(Math.min(w, this.cols - this.innerX), 0)
-      h = Math.max(Math.min(h, this.maxRows - this.innerY), 0)
-      return { w, h }
-    },
-    updateWidth: function (width, colNum) {
-      this.containerWidth = width
-      if (colNum !== undefined && colNum !== null) {
-        this.cols = colNum
-      }
-    },
-    compact: function () {
-      this.createStyle()
-    },
-    tryMakeDraggable: function () {
-      const self = this
-      if (this.interactObj === null || this.interactObj === undefined) {
-        this.interactObj = interact(this.$refs.item)
-        if (!this.useStyleCursor) {
-          this.interactObj.styleCursor(false)
-        }
-      }
-      if (this.draggable && !this.static) {
-        const opts = {
-          ignoreFrom: this.dragIgnoreFrom,
-          allowFrom: this.dragAllowFrom,
-          ...this.dragOption
-        }
-        this.interactObj.draggable(opts)
-        /* this.interactObj.draggable({allowFrom: '.vue-draggable-handle'}); */
-        if (!this.dragEventSet) {
-          this.dragEventSet = true
-          this.interactObj.on('dragstart dragmove dragend', function (event) {
-            self.handleDrag(event)
-          })
-        }
-      } else {
-        this.interactObj.draggable({
-          enabled: false
-        })
-      }
-    },
-    tryMakeResizable: function () {
-      const self = this
-      if (this.interactObj === null || this.interactObj === undefined) {
-        this.interactObj = interact(this.$refs.item)
-        if (!this.useStyleCursor) {
-          this.interactObj.styleCursor(false)
-        }
-      }
-      if (this.resizable && !this.static) {
-        const maximum = this.calcPosition(0, 0, this.maxW, this.maxH)
-        const minimum = this.calcPosition(0, 0, this.minW, this.minH)
-
-        // console.log("### MAX " + JSON.stringify(maximum));
-        // console.log("### MIN " + JSON.stringify(minimum));
-
-        const opts = {
-          // allowFrom: "." + this.resizableHandleClass.trim().replace(" ", "."),
-          edges: {
-            left: false,
-            right: '.' + this.resizableHandleClass.trim().replace(' ', '.'),
-            bottom: '.' + this.resizableHandleClass.trim().replace(' ', '.'),
-            top: false
-          },
-          ignoreFrom: this.resizeIgnoreFrom,
-          restrictSize: {
-            min: {
-              height: minimum.height * this.transformScale,
-              width: minimum.width * this.transformScale
-            },
-            max: {
-              height: maximum.height * this.transformScale,
-              width: maximum.width * this.transformScale
-            }
-          },
-          ...this.resizeOption
-        }
-
-        if (this.preserveAspectRatio) {
-          opts.modifiers = [
-            interact.modifiers.aspectRatio({
-              ratio: 'preserve'
-            })
-          ]
-        }
-
-        this.interactObj.resizable(opts)
-        if (!this.resizeEventSet) {
-          this.resizeEventSet = true
-          this.interactObj
-            .on('resizestart resizemove resizeend', function (event) {
-              self.handleResize(event)
-            })
-        }
-      } else {
-        this.interactObj.resizable({
-          enabled: false
-        })
-      }
-    },
-    autoSize: function () {
-      // ok here we want to calculate if a resize is needed
-      this.previousW = this.innerW
-      this.previousH = this.innerH
-
-      const newSize = this.$slots.default[0].elm.getBoundingClientRect()
-      const pos = this.calcWH(newSize.height, newSize.width, true)
-      if (pos.w < this.minW) {
-        pos.w = this.minW
-      }
-      if (pos.w > this.maxW) {
-        pos.w = this.maxW
-      }
-      if (pos.h < this.minH) {
-        pos.h = this.minH
-      }
-      if (pos.h > this.maxH) {
-        pos.h = this.maxH
-      }
-
-      if (pos.h < 1) {
-        pos.h = 1
-      }
-      if (pos.w < 1) {
-        pos.w = 1
-      }
-
-      // this.lastW = x; // basically, this is copied from resizehandler, but shouldn't be needed
-      // this.lastH = y;
-
-      if (this.innerW !== pos.w || this.innerH !== pos.h) {
-        this.$emit('resize', this.i, pos.h, pos.w, newSize.height, newSize.width)
-      }
-      if (this.previousW !== pos.w || this.previousH !== pos.h) {
-        this.$emit('resized', this.i, pos.h, pos.w, newSize.height, newSize.width)
-        this.eventBus.$emit('resizeEvent', 'resizeend', this.i, this.innerX, this.innerY, pos.h, pos.w)
-      }
+      pos.left = dragging.value.left
     }
   }
+
+  if (isResizing.value) {
+    pos.width = resizing.value.width
+    pos.height = resizing.value.height
+  }
+
+  let style
+
+  if (useCssTransforms.value) {
+    if (renderRtl.value) {
+      style = setTransformRtl(pos.top,pos.right, pos.width, pos.height)
+    } else {
+      style = setTransform(pos.top, pos.left, pos.width, pos.height)
+    }
+  } else {
+    if (renderRtl.value) {
+      style = setTopRight(pos.top, pos.right, pos.width, pos.height);
+    } else {
+      style = setTopLeft(pos.top, pos.left, pos.width, pos.height);
+    }
+  }
+
+  style.value = style
 }
+function emitContainerResized() {
+  let styleProps: {
+    width: number
+    height: number
+    [props: string]: any
+  } = {
+    width: 0,
+    height: 0
+  }
+
+  for (let prop of ['width', 'height']) {
+    let val: string = style.value[prop]
+    let matches = val.match(/^(\d+)px$/)
+
+    if (!matches) return
+    styleProps[prop] = matches[1]
+  }
+
+  emits('containerResized', props.i, props.h, props.w, styleProps.height, styleProps.width)
+}
+function handleResize (event: MouseEvent) {
+  if (props.static) return
+
+  const position = getControlPosition(event)
+
+  if (position == null) return
+
+  const { x, y} = position
+  const newSize = {
+    width: 0,
+    height: 0
+  }
+  let pos
+
+  switch (event.type) {
+    case 'resizestart': {
+      tryMakeResizable()
+      previousW.value = innerW.value
+      previousH.value = innerH.value
+      pos = calcPosition(innerX.value, innerY.value, innerW.value, innerH.value)
+      newSize.width = pos.width
+      newSize.height = pos.height
+      resizing.value = newSize
+      isResizing.value = true
+      break
+    }
+    case 'resizemove': {
+      const coreEvent = createCoreData(lastW.value, lastH.value, x, y)
+
+      if (renderRtl.value) {
+        newSize.width = resizing.value.width - coreEvent.deltaX / transformScale.value
+      } else {
+        newSize.width = resizing.value.width + coreEvent.deltaX / transformScale.value
+      }
+
+      newSize.height = resizing.value.height + coreEvent.deltaY / transformScale.value
+      resizing.value = newSize
+      break
+    }
+    case 'resizeend': {
+      pos = calcPosition(innerX.value, innerY.value, innerW.value, innerH.value)
+      newSize.width = pos.width
+      newSize.height = pos.height
+      resizing.value = null
+      isResizing.value = false
+      break
+    }
+  }
+
+  pos = calcWH(newSize.height, newSize.width)
+  if (pos.w < props.minW) pos.w = props.minW
+  if (pos.w > props.maxW) pos.w = props.maxW
+  if (pos.h < props.minH) pos.h = props.minH
+  if (pos.h > props.maxH) pos.h = props.maxH
+  if (pos.h < 1) pos.h = 1
+  if (pos.w < 1) pos.w = 1
+  lastW.value = x
+  lastH.value = y
+
+  if (innerW.value !== pos.w || innerH.value !== pos.h) {
+    emits('resize', props.i, pos.h, pos.w, newSize.height, newSize.width)
+  }
+  if (event.type === "resizeend" && (previousW.value !== innerW.value || previousH.value !== innerH.value)) {
+    emits("resized", props.i, pos.h, pos.w, newSize.height, newSize.width)
+  }
+
+  eventBus.$emit("resizeEvent", event.type, this.i, this.innerX, this.innerY, pos.h, pos.w);
+}
+function handleDrag (event: MouseEvent) {
+  if (props.static || isResizing.value) return
+
+  const position = getControlPosition(event)
+
+  if (position === null) return
+  const { x, y } = position
+  let newPosition = { top: 0, left: 0 }
+
+  switch (event.type) {
+                    case "dragstart": {
+                        this.previousX = this.innerX;
+                        this.previousY = this.innerY;
+
+                        let parentRect = event.target.offsetParent.getBoundingClientRect();
+                        let clientRect = event.target.getBoundingClientRect();
+
+                        const cLeft = clientRect.left / this.transformScale;
+                        const pLeft = parentRect.left / this.transformScale;
+                        const cRight = clientRect.right / this.transformScale;
+                        const pRight = parentRect.right / this.transformScale;
+                        const cTop = clientRect.top / this.transformScale;
+                        const pTop = parentRect.top / this.transformScale;
+
+                        if (this.renderRtl) {
+                          newPosition.left = (cRight - pRight) * -1;
+                        } else {
+                          newPosition.left = cLeft - pLeft;
+                        }
+                        newPosition.top = cTop - pTop;
+                        this.dragging = newPosition;
+                        this.isDragging = true;
+                        break;
+                    }
+                    case "dragend": {
+                        if (!this.isDragging) return;
+                        let parentRect = event.target.offsetParent.getBoundingClientRect();
+                        let clientRect = event.target.getBoundingClientRect();
+
+                        const cLeft = clientRect.left / this.transformScale;
+                        const pLeft = parentRect.left / this.transformScale;
+                        const cRight = clientRect.right / this.transformScale;
+                        const pRight = parentRect.right / this.transformScale;
+                        const cTop = clientRect.top / this.transformScale;
+                        const pTop = parentRect.top / this.transformScale;
+
+//                        Add rtl support
+                        if (this.renderRtl) {
+                            newPosition.left = (cRight - pRight) * -1;
+                        } else {
+                            newPosition.left = cLeft - pLeft;
+                        }
+                        newPosition.top = cTop - pTop;
+//                        console.log("### drag end => " + JSON.stringify(newPosition));
+//                        console.log("### DROP: " + JSON.stringify(newPosition));
+                        this.dragging = null;
+                        this.isDragging = false;
+                        // shouldUpdate = true;
+                        break;
+                    }
+                    case "dragmove": {
+                        const coreEvent = createCoreData(this.lastX, this.lastY, x, y);
+//                        Add rtl support
+                        if (this.renderRtl) {
+                            newPosition.left = this.dragging.left - coreEvent.deltaX / this.transformScale;
+                        } else {
+                            newPosition.left = this.dragging.left + coreEvent.deltaX / this.transformScale;
+                        }
+                        newPosition.top = this.dragging.top + coreEvent.deltaY / this.transformScale;
+                        if(this.bounded){
+                            const bottomBoundary = event.target.offsetParent.clientHeight - this.calcGridItemWHPx(this.h, this.rowHeight, this.margin[1]);
+                            newPosition.top = this.clamp(newPosition.top, 0, bottomBoundary);
+                            const colWidth = this.calcColWidth();
+                            const rightBoundary = this.containerWidth - this.calcGridItemWHPx(this.w, colWidth, this.margin[0]);
+                            newPosition.left = this.clamp(newPosition.left, 0, rightBoundary);
+                        }
+//                        console.log("### drag => " + event.type + ", x=" + x + ", y=" + y);
+//                        console.log("### drag => " + event.type + ", deltaX=" + coreEvent.deltaX + ", deltaY=" + coreEvent.deltaY);
+//                        console.log("### drag end => " + JSON.stringify(newPosition));
+                        this.dragging = newPosition;
+                        break;
+                    }
+                }
+
+                // Get new XY
+                let pos;
+                if (this.renderRtl) {
+                    pos = this.calcXY(newPosition.top, newPosition.left);
+                } else {
+                    pos = this.calcXY(newPosition.top, newPosition.left);
+                }
+
+                this.lastX = x;
+                this.lastY = y;
+
+                if (this.innerX !== pos.x || this.innerY !== pos.y) {
+                    this.$emit("move", this.i, pos.x, pos.y);
+                }
+                if (event.type === "dragend" && (this.previousX !== this.innerX || this.previousY !== this.innerY)) {
+                    this.$emit("moved", this.i, pos.x, pos.y);
+                }
+                this.eventBus.$emit("dragEvent", event.type, this.i, pos.x, pos.y, this.innerH, this.innerW)
+}
+function calcPosition (x: number, y: number, w: number, h: number) {
+  const colWidth = calcColWidth()
+  let out: {
+    top: number
+    right: number
+    width: number
+    height: number
+  } = {
+    top: 0,
+    right: 0,
+    width: 0,
+    height: 0
+  }
+
+  if (renderRtl.value) {
+    out = {
+      right: Math.round(colWidth * x + (x + 1) * margin.value[0]),
+      top: Math.round(rowHeight.value * y + (y + 1) * margin.value[1]),
+      width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * margin.value[0]),
+      height: h === Infinity ? y : Math.round(rowHeight.value * h + Math.max(0, h - 1) * margin.value[1])
+    }
+  }
+
+  return out
+}
+function calcXY (top: number, left: number) {
+  const colWidth = calcColWidth()
+  let x = Math.round((left - margin.value[0]) / (colWidth + margin.value[0]))
+  let y = Math.round((top - margin.value[1]) / (rowHeight.value + margin.value[1]))
+
+  x = Math.max(Math.min(x, cols.value - innerW.value), 0)
+  y = Math.max(Math.min(y, maxRows.value - innerH.value), 0)
+
+  return {
+    x,
+    y
+  }
+}
+function calcColWidth () {
+  return (containerWidth.value - (margin.value[0] * (cols.value + 1))) / cols.value
+}
+function calcGridItemWHPx (gridUnits: number, colOrRowSize: number, marginPx: number) {
+  if (!Number.isFinite(gridUnits)) return gridUnits
+  return Math.round(colOrRowSize * gridUnits + Math.max(0, gridUnits - 1) * marginPx)
+}
+function clamp (num: number, lowerBound, upperBound) {
+  return Math.max(Math.min(num, upperBound), lowerBound)
+}
+function calcWH (height: number, width: number, autoSizeFlag = false) {
+  const colWidth = calcColWidth()
+  let w = Math.round((width + margin.value[0]) / (colWidth + margin.value[0]))
+  let h = 0
+
+  if (!autoSizeFlag) {
+    h = Math.round((height + margin.value[1]) / (rowHeight.value + margin.value[1]))
+  } else {
+    h = Math.ceil((height + margin.value[1]) / (rowHeight.value + margin.value[1]))
+  }
+
+  w = Math.max(Math.min(w, cols.value - innerX.value), 0)
+  h = Math.max(Math.min(h, maxRows.value - innerY.value), 0)
+
+  return {
+    w,
+    h
+  }
+}
+function updateWidth (width: number, colNum: number) {
+  containerWidth.value = width
+  if (colNum !== undefined && colNum !== null) {
+    cols.value = colNum
+  }
+}
+function compact () {
+  createStyle()
+}
+function tryMakeDraggable () {
+  if (interactObj === null || interactObj === undefined) {
+    interactObj = interact(itemRef.value)
+    
+    if (!useStyleCursor.value) {
+      interactObj.styleCursor(false)
+    }
+  }
+
+  if (draggable.value && props.static) {
+    const opts = {
+      ignoreFrom: props.dragIgnoreFrom,
+      allowFrom: props.dragAllowFrom,
+      ...props.dragOption
+    }
+
+    interactObj.draggable(opts)
+
+    if (!dragEventSet.value) {
+      dragEventSet.value = true
+      interactObj.on('dragstart dragmove dragend', (event: MouseEvent) => {
+        handleDrag(event)
+      })
+    }
+  } else {
+    interactObj.draggable({ enabled: false })
+  }
+}
+function tryMakeResizable () {
+  if (interactObj === null || interactObj === undefined) {
+    interactObj = interact(itemRef.value)
+
+    if (!useStyleCursor.value) {
+      interactObj.styleCursor(false)
+    }
+  }
+
+  if  (resizable.value && props.static) {
+    let maximum = calcPosition(0, 0, props.maxW, props.maxH)
+    let minimum = calcPosition(0, 0, props.minW, props.minH)
+    const opts = {
+      edges: {
+        left: false,
+        right: '.' + resizableHandleClass.value.trim().replace(' ', '.'),
+        bottom: '.' + resizableHandleClass.value.trim().replace(' ', '.'),
+        top: false
+      },
+      ignoreFrom: props.resizeIgnoreFrom,
+      restrictSize: {
+        min: {
+          height: minimum.height * transformScale.value,
+          width: minimum.width * transformScale.value
+        },
+        max: {
+          height: maximum.height * transformScale.value,
+          width: maximum.width * transformScale.value
+        }
+      },
+      ...props.resizeOption
+    }
+
+    if (props.preserveAspectRatio) {
+      opts.modifiers = [
+        interact.modifiers.aspectRatio({ ratio: 'preserve' })
+      ]
+    }
+
+    interactObj.resizable(opts)
+
+    if (!resizeEventSet.value) {
+      resizeEventSet.value = true
+      interactObj.on('resizestart resizemove resizeend', (event: MouseEvent) => {
+        handleResize(event)
+      })
+    }
+  } else {
+    interactObj.resizable({ enabled: false })
+  }
+}
+function autoSize () {
+  previousW.value = innerW.value
+  previousH.value = innerH.value
+
+  let newSize = slots.defaults[0].elm.getBoundingClientRect()
+  let pos = calcWH(newSize.height, newSize.width, true)
+
+  if (pos.w < props.minW) pos.w = props.minW
+  if (pos.w > props.maxW) pos.w = props.maxW
+  if (pos.h < props.minH) pos.h = props.minH
+  if (pos.h > props.maxH) pos.h = props.maxH
+  if (pos.h < 1) pos.h = 1
+  if (pos.w < 1) pos.w = 1
+
+  if (innerW.value !== pos.w || innerH.value !== pos.h) {
+    emits('resize', props.i, pos.h, pos.w, newSize.height, newSize.width)
+  }
+
+  if (previousW.value !== pos.w || previousH.value !== pos.h) {
+    emits('resized', props.i, pos.h, pos.w, newSize.height, newSize.width)
+    eventBus.$emit('resizeEvent', 'resizeend', props.i, innerX.value, innerY.value, pos.h, pos.w)
+  }
+}
+// #endregion
 </script>
 <style>
 .vue-grid-item {
