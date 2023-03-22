@@ -23,7 +23,9 @@
 		onBeforeUnmount,
 		onMounted,
 		nextTick,
-		defineEmits
+		defineEmits,
+		provide,
+		getCurrentInstance
 	} from 'vue'
 	import elementResizeDetector from 'element-resize-detector'
 	import _debug from 'debug'
@@ -36,7 +38,8 @@
 		findOrGenerateResponsiveLayout,
 		getLayoutItem,
 		getAllCollisions,
-		moveElement
+		moveElement,
+		validateLayout
 	} from '@utils'
 	import { usePubSub, useEventListener } from '@hooks'
 	import type {
@@ -375,7 +378,6 @@
 		debug(eventName + ' id=' + id + ', x=' + x + ', y=' + y)
 		const { layout, restoreOnDrag, verticalCompact, preventCollision } = props
 		let currentDragLayoutItem = getLayoutItem(layout, id)
-		//GetLayoutItem sometimes returns null object
 		if (currentDragLayoutItem === undefined || currentDragLayoutItem === null) {
 			currentDragLayoutItem = { x: 0, y: 0 } as LayoutItem
 		}
@@ -441,7 +443,8 @@
 
 		// init
 		nextTick(function () {
-			// validateLayout(this.layout)
+			// FIXME: ???
+			// validateLayout(props.layout)
 
 			originalLayout = props.layout
 			nextTick(function () {
@@ -481,6 +484,8 @@
 			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
 		}
 	})
+	provide('parentLayoutPropsGetter', () => props)
+	provide('parentLayoutInstanceGetter', ((instance) => instance)(getCurrentInstance()))
 </script>
 <script lang="ts">
 	export default {
