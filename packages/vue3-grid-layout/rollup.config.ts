@@ -4,9 +4,10 @@ import resolve from 'rollup-plugin-node-resolve'
 import postcss from 'rollup-plugin-postcss'
 import autoprefixer from 'autoprefixer'
 import vue from 'rollup-plugin-vue'
-import typescript from 'rollup-plugin-typescript'
-import pkg from './package.json'
+import typescript from 'rollup-plugin-typescript2'
+// import pkg from './package.json'
 import alias from '@rollup/plugin-alias'
+// import dts from 'rollup-plugin-dts'
 // import replace from '@rollup/plugin-replace'
 
 const baseConfig = defineConfig({
@@ -22,13 +23,12 @@ const baseConfig = defineConfig({
 		// 	},
 		// 	preventAssignment: true
 		// }),
+		alias({
+			entries: [{ find: '@', replacement: path.resolve('./src/') }]
+		}),
 		typescript(),
 		resolve(),
-		vue(),
-		resolve(),
-		alias({
-			entries: [{ find: '@', replacement: './src' }]
-		})
+		vue()
 	],
 	output: {
 		file: 'dist/index.esm.js',

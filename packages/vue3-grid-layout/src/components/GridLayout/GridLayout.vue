@@ -37,8 +37,8 @@
 		getLayoutItem,
 		getAllCollisions,
 		moveElement
-	} from '../../internal/utils'
-	import { usePubSub, useEventListener } from '../../internal/hooks'
+	} from '@utils'
+	import { usePubSub, useEventListener } from '@hooks'
 	import type {
 		Layout,
 		BreakPoints,
@@ -46,7 +46,7 @@
 		Placeholder,
 		CssStyle,
 		LayoutItem,
-BreakPointsType
+		BreakPointsType
 	} from '../../types/index'
 	import GridItem from '../GridItem'
 	import { diffTwoLayout } from './utils'
@@ -55,7 +55,7 @@ BreakPointsType
 		 * 自动尺寸
 		 * @default true
 		 */
-		autoSize?: boolean
+		autoResize?: boolean
 		/**
 		 * 列数
 		 * @default 12
@@ -241,12 +241,12 @@ BreakPointsType
 
 		// Find or generate a new layout.
 		let layout = findOrGenerateResponsiveLayout(
-      // @ts-ignore
+			// @ts-ignore
 			originalLayout!,
 			layouts,
 			breakpoints,
 			newBreakpoint,
-      // @ts-ignore
+			// @ts-ignore
 			lastBreakpoint,
 			newCols,
 			verticalCompact

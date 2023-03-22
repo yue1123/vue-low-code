@@ -1,5 +1,5 @@
 import { cloneLayout, compact, correctBounds } from './core'
-import type { Layout, BreakPointsType, BreakPoints } from '../../types'
+import type { Layout, BreakPointsType, BreakPoints } from '@types'
 export type ResponsiveLayout = { lg?: Layout; md?: Layout; sm?: Layout; xs?: Layout; xxs?: Layout }
 
 /**
@@ -25,7 +25,7 @@ export function getBreakpointFromWidth(breakpoints: BreakPoints, width: number):
  * @param  {Object} cols       Map of breakpoints to cols.
  * @return {Number}            Number of cols.
  */
-export function getColsFromBreakpoint(breakpoint: BreakPointsType, cols: BreakPointsType): number {
+export function getColsFromBreakpoint(breakpoint: BreakPointsType, cols: BreakPoints): number {
 	if (!cols[breakpoint]) {
 		throw new Error(
 			'ResponsiveGridLayout: `cols` entry for breakpoint ' + breakpoint + ' is missing!'
@@ -59,7 +59,7 @@ export function findOrGenerateResponsiveLayout(
 	verticalCompact: boolean
 ): Layout {
 	// If it already exists, just return it.
-	if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint])
+	if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint]!)
 	// Find or generate the next layout
 	let layout = orgLayout
 

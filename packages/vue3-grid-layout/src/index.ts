@@ -1,5 +1,5 @@
 import type { App } from 'vue'
-import componentsList from './components'
+// import componentsList from './components'
 
 export * from './components'
 const vue3GridLayout = {
