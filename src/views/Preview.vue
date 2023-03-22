@@ -33,7 +33,7 @@
 	import { ref } from 'vue'
 	import allComponents from '../components/index'
 	import { SmartWidgetGrid, SmartWidget } from 'vue-smart-widget'
-	import 'vue-smart-widget/lib/style.css'
+	// import 'vue-smart-widget/lib/style.css'
 	const rowHeight = 20
 	const comList = ref(
 		Object.entries(allComponents).map(([name, module]) => {

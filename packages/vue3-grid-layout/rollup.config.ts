@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import path from 'node:path'
-// import merge from 'deepmerge'
 import { defineConfig } from 'rollup'
 import resolve from 'rollup-plugin-node-resolve'
-// const babel = require('@rollup/plugin-babel').default
-// import replace from '@rollup/plugin-replace'
-// import { terser } from 'rollup-plugin-terser'
+import postcss from 'rollup-plugin-postcss'
+import autoprefixer from 'autoprefixer'
 import vue from 'rollup-plugin-vue'
 import typescript from 'rollup-plugin-typescript'
 import pkg from './package.json'
 import alias from '@rollup/plugin-alias'
+// import replace from '@rollup/plugin-replace'
 
 const baseConfig = defineConfig({
 	external(id) {
@@ -25,16 +23,11 @@ const baseConfig = defineConfig({
 		// 	preventAssignment: true
 		// }),
 		typescript(),
+		resolve(),
 		vue(),
 		resolve(),
-		// babel({
-		// 	exclude: 'node_modules/**',
-		// 	babelHelpers: 'bundled'
-		// })
 		alias({
-			entries: [
-				{ find: '@', replacement: './src' }
-			]
+			entries: [{ find: '@', replacement: './src' }]
 		})
 	],
 	output: {
@@ -48,4 +41,15 @@ const baseConfig = defineConfig({
 	}
 })
 
-export default baseConfig
+const cssBuild = defineConfig({
+	input: path.resolve('./src/styles/index.css'),
+	output: { file: 'dist/style.css' },
+	plugins: [
+		postcss({
+			extract: true,
+			plugins: [autoprefixer()]
+		})
+	]
+})
+
+export default [baseConfig, cssBuild]

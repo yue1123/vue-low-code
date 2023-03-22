@@ -55,7 +55,7 @@
 	import { ref, nextTick, watchEffect } from 'vue'
 	import allComponents from '../components/index'
 	import { SmartWidgetGrid, SmartWidget } from 'vue-smart-widget'
-	import 'vue-smart-widget/lib/style.css'
+	// import 'vue-smart-widget/lib/style.css'
 	// import { VueDraggableNext } from 'vue-draggable-next'
 	// const Draggable = VueDraggableNext
 	const rowHeight = 20

@@ -16,7 +16,8 @@
     "vue-draggable-next": "^2.1.1",
     "vue-grid-layout": "3.0.0-beta1",
     "vue-smart-widget": "1.0.0-alpha.1",
-    "vue3-drr-grid-layout": "^1.9.7"
+    "vue3-drr-grid-layout": "^1.9.7",
+    "vue3-grid-layout": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.0.0",
