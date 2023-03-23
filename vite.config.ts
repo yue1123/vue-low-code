@@ -6,5 +6,8 @@ export default defineConfig({
 	plugins: [vue()],
 	resolve: {
 		alias: {}
+	},
+	build: {
+		cssCodeSplit: false
 	}
 })
