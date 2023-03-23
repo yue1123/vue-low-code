@@ -1,17 +1,25 @@
 import mitt from 'mitt'
 import type { Emitter } from 'mitt'
 
+type ItemDragEvent = {
+	eventName: string
+	id: string
+	x: number
+	y: number
+	h: number
+	w: number
+}
+
 export type EmitterEvents = {
 	// initd: BMapGL.Map
 	// unload: any
-	'item:dragEvent': {
-		eventName: string
-		id: string
-		x: number
-		y: number
-		h: number
-		w: number
-	}
+	'item:dragEvent': ItemDragEvent
+	updateWidth: number
+	compact: void
+
+	setColNum: number
+
+	'item:resizeEvent': ItemDragEvent
 	// [prop: string]:
 }
 
