@@ -28,7 +28,7 @@
 		ref
 	} from 'vue'
 	import elementResizeDetector from 'element-resize-detector'
-	import _debug from 'debug'
+	// import _debug from 'debug'
 	import {
 		bottom,
 		compact,
@@ -179,7 +179,8 @@ ItemResizeEvent
 	})
 
 	// debug
-	const debug = _debug('vue-grid-layout:layout')
+	// const debug = _debug('vue-grid-layout:layout')
+	const debug = console.log
 
 	// resize listen
 	let elementResizeDetectorInstance: any = null
