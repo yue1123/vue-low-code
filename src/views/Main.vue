@@ -17,9 +17,9 @@
 				</NScrollbar>
 			</NLayoutSider>
 			<NLayoutContent class="previewContainer" bordered>
-				<GridLayout :layout="layout" :rowHeight="rowHeight">
+				<SmartWidgetGrid :layout="layout" :rowHeight="rowHeight">
 					<!-- @ts-ignore -->
-					<!-- <template v-slot:[com.i] v-for="com in layout" :key="com.name">
+					<template v-slot:[com.i] v-for="com in layout" :key="com.name">
 						<SmartWidget simple :id="com.i" fullscreen>
 							<Suspense>
 								<div ref="addComponentsRef">
@@ -33,8 +33,8 @@
 								</template>
 							</Suspense>
 						</SmartWidget>
-					</template> -->
-				</GridLayout>
+					</template>
+				</SmartWidgetGrid>
 			</NLayoutContent>
 		</NLayout>
 	</NLayout>
@@ -54,9 +54,9 @@
 	} from 'naive-ui'
 	import { ref, nextTick, watchEffect } from 'vue'
 	import allComponents from '../components/index'
-  import { GridLayout } from 'vue3-grid-layout'
-	// import { SmartWidgetGrid, SmartWidget } from 'vue-smart-widget'
-	// import 'vue-smart-widget/lib/style.css'
+  // import { GridLayout } from 'vue3-grid-layout'
+	import { SmartWidgetGrid, SmartWidget } from 'vue-smart-widget'
+	import 'vue-smart-widget/lib/style.css'
 	// import { VueDraggableNext } from 'vue-draggable-next'
 	// const Draggable = VueDraggableNext
 	const rowHeight = 20

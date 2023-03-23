@@ -4,7 +4,15 @@ import type { Emitter } from 'mitt'
 export type EmitterEvents = {
 	// initd: BMapGL.Map
 	// unload: any
-	[prop: string]: any
+	'item:dragEvent': {
+		eventName: string
+		id: string
+		x: number
+		y: number
+		h: number
+		w: number
+	}
+	// [prop: string]:
 }
 
 let emitter: Emitter<EmitterEvents>

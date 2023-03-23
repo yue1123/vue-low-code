@@ -17,7 +17,6 @@
 
 <script setup lang="ts">
 	import {
-		ref,
 		shallowRef,
 		onBeforeMount,
 		onBeforeUnmount,
@@ -25,7 +24,8 @@
 		nextTick,
 		defineEmits,
 		provide,
-		getCurrentInstance
+		getCurrentInstance,
+		ref
 	} from 'vue'
 	import elementResizeDetector from 'element-resize-detector'
 	import _debug from 'debug'
@@ -185,7 +185,15 @@
 	const layoutGridContainerRef = ref<HTMLDivElement>()
 	// pub sub center
 	const { off, on, emit } = usePubSub()
-	const vueEmits = defineEmits(['layout-updated', 'breakpoint-changed', 'update:layout'])
+	const vueEmits = defineEmits<{
+		(event: 'layout-updated', layout: Layout): any
+		(event: 'layout-before-mount', layout: Layout): any
+		(event: 'layout-mounted', layout: Layout): any
+		(event: 'layout-created', layout: Layout): any
+		(event: 'breakpoint-changed', newBreakPoint: BreakPointsType, layout: Layout): any
+		(event: 'update:layout', layout: Layout): any
+		(event: 'layout-ready', layout: Layout): any
+	}>()
 	// 是否正在拖动中
 	const isDragging = ref<boolean>(false)
 	// 预判拖动元素位置
@@ -205,19 +213,72 @@
 	let positionsBeforeDrag: Record<string, LayoutItem> | undefined = undefined
 	// elementResizeDetector
 	// window resize event handler
-	function resizeEventHandler() {}
+	// function resizeEventHandler() {}
 	// sub item drag event handler
-	function dragEventHandler() {}
-	// FIXME: rename
+	// function dragEventHandler() {}
+	useEventListener(self, 'resize', handleWindowResize)
+	onBeforeMount(() => {
+		emit('layout-before-mount', props.layout)
+		// on()
+	})
+	onMounted(() => {
+		emit('layout-mounted', props.layout)
+
+		// init
+		nextTick(function () {
+			// FIXME: ???
+			// validateLayout(props.layout)
+
+			originalLayout = props.layout
+			nextTick(function () {
+				initResponsiveFeatures()
+
+				handleWindowResize()
+
+				//self.width = self.$el.offsetWidth;
+				// addWindowEventListener('resize', self.onWindowResize)
+
+				compact(props.layout, props.verticalCompact)
+
+				emit('layout-updated', props.layout)
+
+				updateHeight()
+				nextTick(function () {
+					elementResizeDetectorInstance = elementResizeDetector({
+						strategy: 'scroll', //<- For ultra performance.
+						// See https://github.com/wnr/element-resize-detector/issues/110 about callOnAdd.
+						callOnAdd: false
+					})
+					elementResizeDetectorInstance.listenTo(
+						layoutGridContainerRef.value,
+						function () {
+							handleWindowResize()
+						}
+					)
+				})
+			})
+		})
+	})
+	onBeforeUnmount(() => {
+		off('resizeEvent', drag)
+		off('dragEvent', dragEventHandler)
+		if (elementResizeDetectorInstance) {
+			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
+		}
+	})
+	provide('parentLayoutPropsGetter', props)
+	provide('parentLayoutInstanceGetter', getCurrentInstance())
+
+	// init
+	;(function init() {
+		on('resizeEvent', handleResizeEvent)
+		on('dragEvent', handleDragEvent)
+		emit('layout-created', props.layout)
+	})()
+
 	function initResponsiveFeatures() {
 		// clear layouts
 		layouts = Object.assign({}, props.responsiveLayouts)
-	}
-	// init
-	function init() {
-		on('resizeEvent', resizeEventHandler)
-		on('dragEvent', dragEventHandler)
-		emit('layout-created', props.layout)
 	}
 	// window resize handler
 	function handleWindowResize() {}
@@ -225,9 +286,7 @@
 		if (!props.autoResize) return
 		let { rowHeight, margin, layout } = props
 		mergedStyle = Object.assign(mergedStyle, {
-			// FIXME: bottom function
-			// FIXME: handle margin row value case
-			// FIXME: Layout type
+			// FIXME: handle margin four value case
 			height: bottom(layout) * (rowHeight + margin[1]) + margin[1] + 'px'
 		})
 	}
@@ -299,7 +358,7 @@
 			vueEmits('layout-updated', layout)
 		}
 	}
-	function resizeEvent(
+	function handleResizeEvent(
 		eventName: string,
 		id: string,
 		x: number,
@@ -374,7 +433,7 @@
 
 		if (eventName === 'resizeend') vueEmits('layout-updated', layout)
 	}
-	function dragEvent(eventName: string, id: string, x: number, y: number, h: number, w: number) {
+	function handleDragEvent({ eventName, id, x, y, h, w } = event) {
 		debug(eventName + ' id=' + id + ', x=' + x + ', y=' + y)
 		const { layout, restoreOnDrag, verticalCompact, preventCollision } = props
 		let currentDragLayoutItem = getLayoutItem(layout, id)
@@ -433,59 +492,6 @@
 			vueEmits('layout-updated', _layout)
 		}
 	}
-	init()
-	useEventListener(self, 'resize', handleWindowResize)
-	onBeforeMount(() => {
-		emit('layout-before-mount', props.layout)
-	})
-	onMounted(() => {
-		emit('layout-mounted', props.layout)
-
-		// init
-		nextTick(function () {
-			// FIXME: ???
-			// validateLayout(props.layout)
-
-			originalLayout = props.layout
-			nextTick(function () {
-				initResponsiveFeatures()
-
-				handleWindowResize()
-
-				//self.width = self.$el.offsetWidth;
-				// addWindowEventListener('resize', self.onWindowResize)
-
-				compact(props.layout, props.verticalCompact)
-
-				emit('layout-updated', props.layout)
-
-				updateHeight()
-				nextTick(function () {
-					elementResizeDetectorInstance = elementResizeDetector({
-						strategy: 'scroll', //<- For ultra performance.
-						// See https://github.com/wnr/element-resize-detector/issues/110 about callOnAdd.
-						callOnAdd: false
-					})
-					elementResizeDetectorInstance.listenTo(
-						layoutGridContainerRef.value,
-						function () {
-							handleWindowResize()
-						}
-					)
-				})
-			})
-		})
-	})
-	onBeforeUnmount(() => {
-		off('resizeEvent', resizeEventHandler)
-		off('dragEvent', dragEventHandler)
-		emit('layout-created', props.layout)
-		if (elementResizeDetectorInstance) {
-			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
-		}
-	})
-	provide('parentLayoutPropsGetter', () => props)
-	provide('parentLayoutInstanceGetter', ((instance) => instance)(getCurrentInstance()))
 </script>
 <script lang="ts">
 	export default {

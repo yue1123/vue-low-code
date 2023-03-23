@@ -1,8 +1,10 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "src",
+		"rootDir": ".",
 		"declaration": true,
+		"skipLibCheck": true,
+		"strict": false,
 		"declarationDir": "./es",
 		"emitDeclarationOnly": true
 	}
