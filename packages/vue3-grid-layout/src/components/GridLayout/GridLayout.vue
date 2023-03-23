@@ -49,8 +49,10 @@
 		Placeholder,
 		CssStyle,
 		LayoutItem,
-		BreakPointsType
-	} from '../../types/index'
+		BreakPointsType,
+		ItemDragEvent,
+ItemResizeEvent
+	} from '@types'
 	import GridItem from '../GridItem'
 	import { diffTwoLayout } from './utils'
 	export interface GridLayoutProps {
@@ -217,12 +219,9 @@
 	// sub item drag event handler
 	// function dragEventHandler() {}
 	useEventListener(self, 'resize', handleWindowResize)
-	onBeforeMount(() => {
-		emit('layout-before-mount', props.layout)
-		// on()
-	})
+	onBeforeMount(() => vueEmits('layout-before-mount', props.layout))
 	onMounted(() => {
-		emit('layout-mounted', props.layout)
+		vueEmits('layout-mounted', props.layout)
 
 		// init
 		nextTick(function () {
@@ -240,7 +239,7 @@
 
 				compact(props.layout, props.verticalCompact)
 
-				emit('layout-updated', props.layout)
+				vueEmits('layout-updated', props.layout)
 
 				updateHeight()
 				nextTick(function () {
@@ -260,8 +259,8 @@
 		})
 	})
 	onBeforeUnmount(() => {
-		off('resizeEvent', drag)
-		off('dragEvent', dragEventHandler)
+		off('item:resizeEvent', handleDragEvent)
+		off('item:dragEvent', handleDragEvent)
 		if (elementResizeDetectorInstance) {
 			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
 		}
@@ -271,9 +270,9 @@
 
 	// init
 	;(function init() {
-		on('resizeEvent', handleResizeEvent)
-		on('dragEvent', handleDragEvent)
-		emit('layout-created', props.layout)
+		on('item:resizeEvent', handleResizeEvent)
+		on('item:dragEvent', handleDragEvent)
+		vueEmits('layout-created', props.layout)
 	})()
 
 	function initResponsiveFeatures() {
@@ -352,23 +351,15 @@
 			}
 
 			compact(layout, verticalCompact)
-			emit('updateWidth', width)
+			emit('layout:updateWidth', width)
 			updateHeight()
 
 			vueEmits('layout-updated', layout)
 		}
 	}
-	function handleResizeEvent(
-		eventName: string,
-		id: string,
-		x: number,
-		y: number,
-		h: number,
-		w: number
-	) {
+	function handleResizeEvent({ eventName, i, x, y, h, w }: ItemResizeEvent) {
 		const { layout, preventCollision, responsive } = props
-		// FIXME: layout type
-		let currentResizeLayoutItem = getLayoutItem(layout, id)
+		let currentResizeLayoutItem = getLayoutItem(layout, i)
 		// GetLayoutItem sometimes return null object
 		if (currentResizeLayoutItem === undefined || currentResizeLayoutItem === null) {
 			currentResizeLayoutItem = { h: 0, w: 0 } as LayoutItem
@@ -409,7 +400,7 @@
 
 		if (eventName === 'resizestart' || eventName === 'resizemove') {
 			placeholder.value = {
-				i: id,
+				i,
 				x,
 				y,
 				w: currentResizeLayoutItem.w,
@@ -418,7 +409,7 @@
 			nextTick(() => {
 				isDragging.value = true
 			})
-			emit('updateWidth', width)
+			emit('layout:updateWidth', width)
 		} else {
 			nextTick(function () {
 				isDragging.value = false
@@ -433,10 +424,10 @@
 
 		if (eventName === 'resizeend') vueEmits('layout-updated', layout)
 	}
-	function handleDragEvent({ eventName, id, x, y, h, w } = event) {
-		debug(eventName + ' id=' + id + ', x=' + x + ', y=' + y)
+	function handleDragEvent({ eventName, i, x, y, h, w }: ItemDragEvent) {
+		debug(eventName + ' id=' + i + ', x=' + x + ', y=' + y)
 		const { layout, restoreOnDrag, verticalCompact, preventCollision } = props
-		let currentDragLayoutItem = getLayoutItem(layout, id)
+		let currentDragLayoutItem = getLayoutItem(layout, i)
 		if (currentDragLayoutItem === undefined || currentDragLayoutItem === null) {
 			currentDragLayoutItem = { x: 0, y: 0 } as LayoutItem
 		}
@@ -453,7 +444,7 @@
 
 		if (eventName === 'dragmove' || eventName === 'dragstart') {
 			placeholder.value = {
-				i: id,
+				i,
 				w,
 				h,
 				x: currentDragLayoutItem.x,
@@ -462,7 +453,7 @@
 			nextTick(() => {
 				isDragging.value = true
 			})
-			emit('updateWidth', width)
+			emit('layout:updateWidth', width)
 		} else {
 			nextTick(function () {
 				isDragging.value = false
@@ -470,7 +461,6 @@
 		}
 
 		// Move the element to the dragged location.
-		// FIXME: emit layout value change
 		const _layout = moveElement(layout, currentDragLayoutItem, x, y, true, preventCollision)
 
 		if (restoreOnDrag) {

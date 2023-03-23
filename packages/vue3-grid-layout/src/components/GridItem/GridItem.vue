@@ -26,9 +26,7 @@
   } from '@utils'
   import { usePubSub } from '@hooks'
   import type { Layout, CssStyle } from '@types'
-  import {anchorDark} from 'naive-ui'
-  import * as buffer from 'buffer'
-  import type {GridLayoutProps} from '@components/GridLayout'
+  // import type {GridLayoutProps} from '@components/GridLayout'
 
   export interface GridItemProps {
     isDraggable?: boolean
@@ -65,7 +63,7 @@
   })
   // parent provide
   const layout = inject<Layout>('layout')
-  const parentLayoutPropsGetter = (inject('parentLayoutPropsGetter') as () => GridLayoutProps)()
+  const parentLayoutPropsGetter = (inject('parentLayoutPropsGetter') as () => any)()
 
   const slots = useSlots()
 
@@ -165,7 +163,7 @@
     resizable.value = val
   })
   watch(() => props.isBounded, val => {
-    bounded = val
+    bounded = !!val
   })
   watch(resizable, tryMakeResizable)
   watch(rowHeight, () => {
@@ -216,15 +214,15 @@
 
 // created
   ;(function() {
-    on('updateWidth', updateWidthHandler)
     on('compact', compactHandler)
-    on('setDraggable', setDraggableHandler)
-    on('setResizable', setResizableHandler)
-    on('setBounded', setBoundedHandler)
-    on('setTransformScale', setTransformScaleHandler)
-    on('setRowHeight', setRowHeightHandler)
-    on('setMaxRows', setMaxRowsHandler)
-    on('directionchange', directionchangeHandler)
+    // on('updateWidth', updateWidthHandler)
+    // on('setDraggable', setDraggableHandler)
+    // on('setResizable', setResizableHandler)
+    // on('setBounded', setBoundedHandler)
+    // on('setTransformScale', setTransformScaleHandler)
+    // on('setRowHeight', setRowHeightHandler)
+    // on('setMaxRows', setMaxRowsHandler)
+    // on('directionchange', directionchangeHandler)
     on('setColNum', setColNum)
 
     rtl = getDocumentDir() === 'rtl'
@@ -252,15 +250,15 @@
   })
 
   onBeforeUnmount(() => {
-    off('updateWidth', updateWidthHandler)
     off('compact', compactHandler)
-    off('setDraggable', setDraggableHandler)
-    off('setResizable', setResizableHandler)
-    off('setBounded', setBoundedHandler)
-    off('setTransformScale', setTransformScaleHandler)
-    off('setRowHeight', setRowHeightHandler)
-    off('setMaxRows', setMaxRowsHandler)
-    off('directionchange', directionchangeHandler)
+    // off('updateWidth', updateWidthHandler)
+    // off('setDraggable', setDraggableHandler)
+    // off('setResizable', setResizableHandler)
+    // off('setBounded', setBoundedHandler)
+    // off('setTransformScale', setTransformScaleHandler)
+    // off('setRowHeight', setRowHeightHandler)
+    // off('setMaxRows', setMaxRowsHandler)
+    // off('directionchange', directionchangeHandler)
     off('setColNum', setColNum)
 
     if (interactObj) {
@@ -445,7 +443,7 @@
     // emit('resizeEvent', event.type, props.i, innerX, innerY, pos.h, pos.w)
     emit('item:resizeEvent', {
       eventName: event.type,
-      id: props.i,
+      i: props.i,
       x: innerX,
       y: innerY,
       w: pos.w,
@@ -557,7 +555,7 @@
     }
     emit('item:dragEvent', {
       eventName: event.type,
-      id: props.i,
+      i: props.i,
       x: pos.x,
       y: pos.y,
       h: innerH,
@@ -765,7 +763,7 @@
       vueEmits('resized', props.i, pos.h, pos.w, newSize.height, newSize.width)
       emit('item:resizeEvent', {
         eventName: 'resizeend',
-        id: props.i,
+        i: props.i,
         x: innerX,
         y: innerY,
         h: pos.h,

@@ -60,6 +60,7 @@ importers:
       rollup-plugin-dts: ^5.3.0
       rollup-plugin-node-resolve: ^5.2.0
       rollup-plugin-postcss: ^4.0.2
+      rollup-plugin-typescript: ^1.0.1
       rollup-plugin-typescript2: ^0.34.1
       rollup-plugin-vue: ^6.0.0
       tslib: ^2.5.0
@@ -92,6 +93,7 @@ importers:
       rollup-plugin-dts: 5.3.0_h4kaxwm6ctjivrsm4cpxaz7nqu
       rollup-plugin-node-resolve: 5.2.0_rollup@3.19.1
       rollup-plugin-postcss: 4.0.2
+      rollup-plugin-typescript: 1.0.1_y2wxofkj373fhto5ciw6eygozi
       rollup-plugin-typescript2: 0.34.1_h4kaxwm6ctjivrsm4cpxaz7nqu
       rollup-plugin-vue: 6.0.0
       tslib: 2.5.0
@@ -2569,6 +2571,19 @@ packages:
       style-inject: 0.3.0
     transitivePeerDependencies:
       - ts-node
+    dev: true
+
+  /rollup-plugin-typescript/1.0.1_y2wxofkj373fhto5ciw6eygozi:
+    resolution: {integrity: sha512-rwJDNn9jv/NsKZuyBb/h0jsclP4CJ58qbvZt2Q9zDIGILF2LtdtvCqMOL+Gq9IVq5MTrTlHZNrn8h7VjQgd8tw==}
+    deprecated: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-typescript.
+    peerDependencies:
+      tslib: '*'
+      typescript: '>=2.1.0'
+    dependencies:
+      resolve: 1.22.1
+      rollup-pluginutils: 2.8.2
+      tslib: 2.5.0
+      typescript: 4.9.5
     dev: true
 
   /rollup-plugin-typescript2/0.34.1_h4kaxwm6ctjivrsm4cpxaz7nqu:

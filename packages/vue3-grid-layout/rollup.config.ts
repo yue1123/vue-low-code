@@ -23,11 +23,11 @@ const baseConfig = defineConfig({
 		// 	},
 		// 	preventAssignment: true
 		// }),
+    resolve(),
 		alias({
-			entries: [{ find: '@', replacement: path.resolve('./src/') }]
+			entries: [{ find: '~', replacement: path.resolve('./src/') }]
 		}),
 		typescript(),
-		resolve(),
 		vue()
 	],
 	output: {

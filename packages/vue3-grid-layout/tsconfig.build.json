@@ -5,6 +5,7 @@
 		"declaration": true,
 		"skipLibCheck": true,
 		"strict": false,
+    "noImplicitThis": false,
 		"declarationDir": "./es",
 		"emitDeclarationOnly": true
 	}
