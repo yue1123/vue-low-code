@@ -54,6 +54,7 @@
 	const props = withDefaults(defineProps<GridItemProps>(), {
 		minH: 1,
 		minW: 1,
+		isDraggable: undefined,
 		maxH: Infinity,
 		maxW: Infinity,
 		dragIgnoreFrom: 'a, button',
@@ -62,9 +63,12 @@
 		dragOption: () => ({}),
 		resizeOption: () => ({})
 	})
+
+	console.error('girdItem', JSON.parse(JSON.stringify(props)))
+
 	// parent provide
 	const layout = inject('parentLayoutInstance') as any
-	const parentLayoutPropsGetter = inject('parentLayoutProps') as any
+	const parentLayoutProps = inject('parentLayoutProps') as any
 
 	const slots = useSlots()
 
@@ -229,7 +233,7 @@
 		tryMakeResizable
 	)
 	watch(
-		() => parentLayoutPropsGetter.margin,
+		() => parentLayoutProps.margin,
 		(val) => {
 			if (!val || (val[0] == margin[0] && val[1] == margin[1])) return
 			margin = val.map((m: number) => Number(m))
@@ -241,7 +245,7 @@
 	// created
 	;(function () {
 		on('compact', compactHandler)
-		// on('updateWidth', updateWidthHandler)
+		on('layout:updateWidth', updateWidthHandler)
 		// on('setDraggable', setDraggableHandler)
 		// on('setResizable', setResizableHandler)
 		// on('setBounded', setBoundedHandler)
@@ -255,29 +259,39 @@
 	})()
 
 	onMounted(() => {
-		if ((layout as any).responsive && (layout as any).lastBreakpoint) {
-			cols.value = getColsFromBreakpoint((layout as any).lastBreakpoint, (layout as any).cols)
+		const parentLayoutWidth = (inject('parentLayoutContainerWidthGetter') as () => number)()
+		if (parentLayoutProps.responsive && parentLayoutProps.lastBreakpoint) {
+			cols.value = getColsFromBreakpoint(
+				parentLayoutProps.lastBreakpoint,
+				parentLayoutProps.cols
+			)
 		} else {
-			cols.value = (layout as any).colNum
+			cols.value = parentLayoutProps.colNum
 		}
 
-		rowHeight.value = (layout as any).rowHeight
-		containerWidth.value = (layout as any).width !== null ? (layout as any).width : 100
-		margin = (layout as any).margin !== undefined ? (layout as any).margin : [10, 10]
-		maxRows = (layout as any).maxRows
-
-		draggable.value = props.isDraggable ?? (layout as any).isDraggable
-		resizable.value = props.isResizable ?? (layout as any).isResizable
-		bounded = props.isBounded ?? (layout as any).isBounded
-		transformScale = (layout as any).transformScale
-		useCssTransforms.value = (layout as any).useCssTransforms
-		useStyleCursor = (layout as any).useStyleCursor
+		rowHeight.value = parentLayoutProps.rowHeight
+		containerWidth.value = parentLayoutWidth !== null ? parentLayoutWidth : 100
+		margin = parentLayoutProps.margin !== undefined ? parentLayoutProps.margin : [10, 10]
+		maxRows = parentLayoutProps.maxRows
+		console.log(props)
+		console.log(
+			props.isDraggable,
+			parentLayoutProps.isDraggable,
+			props.isDraggable ?? parentLayoutProps.isDraggable,
+			'props.isDraggable ?? parentLayoutProps.isDraggable'
+		)
+		draggable.value = props.isDraggable ?? parentLayoutProps.isDraggable
+		resizable.value = props.isResizable ?? parentLayoutProps.isResizable
+		bounded = props.isBounded ?? parentLayoutProps.isBounded
+		transformScale = parentLayoutProps.transformScale
+		useCssTransforms.value = parentLayoutProps.useCssTransforms
+		useStyleCursor = parentLayoutProps.useStyleCursor
 		createStyle()
 	})
 
 	onBeforeUnmount(() => {
 		off('compact', compactHandler)
-		// off('updateWidth', updateWidthHandler)
+		off('layout:updateWidth', updateWidthHandler)
 		// off('setDraggable', setDraggableHandler)
 		// off('setResizable', setResizableHandler)
 		// off('setBounded', setBoundedHandler)
@@ -294,6 +308,7 @@
 
 	// #region Methods
 	function updateWidthHandler(width: number) {
+		console.info('layout:updateWidth', width)
 		updateWidth(width)
 	}
 	function compactHandler() {
@@ -360,6 +375,7 @@
 		let _style
 
 		if (useCssTransforms.value) {
+			console.log('--------------')
 			if (renderRtl.value) {
 				_style = setTransformRtl(pos.top, pos.right!, pos.width, pos.height)
 			} else {
@@ -374,6 +390,7 @@
 		}
 
 		style.value = _style
+		console.log(style, 'style')
 	}
 	function emitContainerResized() {
 		let styleProps: {
@@ -583,6 +600,7 @@
 	}
 	function calcPosition(x: number, y: number, w: number, h: number) {
 		const colWidth = calcColWidth()
+		console.log('====', colWidth, x, y, w, h)
 		let out: {
 			top: number
 			right?: number
@@ -594,7 +612,8 @@
 			width: 0,
 			height: 0
 		}
-
+		const { margin } = parentLayoutProps
+		console.log(renderRtl.value)
 		if (renderRtl.value) {
 			out = {
 				right: Math.round(colWidth * x + (x + 1) * margin[0]),
@@ -624,7 +643,7 @@
 						: Math.round(rowHeight.value * h + Math.max(0, h - 1) * margin[1])
 			}
 		}
-
+		console.log(out, 'out')
 		return out
 	}
 	function calcXY(top: number, left: number) {
@@ -641,6 +660,8 @@
 		}
 	}
 	function calcColWidth() {
+		const { margin } = parentLayoutProps
+		console.log(containerWidth.value, 'containerWidth.value')
 		return (containerWidth.value - margin[0] * (cols.value + 1)) / cols.value
 	}
 	function calcGridItemWHPx(gridUnits: number, colOrRowSize: number, marginPx: number) {
@@ -651,6 +672,7 @@
 		return Math.max(Math.min(num, upperBound), lowerBound)
 	}
 	function calcWH(height: number, width: number, autoSizeFlag = false) {
+		const { margin } = parentLayoutProps
 		const colWidth = calcColWidth()
 		let w = Math.round((width + margin[0]) / (colWidth + margin[0]))
 		let h = 0
@@ -687,15 +709,21 @@
 			}
 		}
 
-    console.log('%cGridItem.vue:690%cdraggable', 'background:#03186d; color: #fff;padding:2px 4px;border-radius:2px 0 0 2px', 'background: #496cf6; color: #fff;padding:2px 4px;border-radius:0 2px 2px 0', draggable.value)
-    // debugger
+		console.log(
+			'%cGridItem.vue:690%cdraggable',
+			'background:#03186d; color: #fff;padding:2px 4px;border-radius:2px 0 0 2px',
+			'background: #496cf6; color: #fff;padding:2px 4px;border-radius:0 2px 2px 0',
+			draggable.value
+		)
+		// debugger
+		console.log(draggable.value, !props.static, 'draggable.value && !props.static')
 		if (draggable.value && !props.static) {
 			const opts = {
 				ignoreFrom: props.dragIgnoreFrom,
 				allowFrom: props.dragAllowFrom,
 				...props.dragOption
 			}
-
+			console.log('object', opts, '============fasdfasdffasdfasfd发的发=')
 			interactObj.draggable(opts)
 
 			if (!dragEventSet) {
@@ -711,8 +739,8 @@
 	function tryMakeResizable() {
 		if (interactObj === null || interactObj === undefined) {
 			interactObj = interact(itemRef.value)
-      console.log('============  tryMakeResizable  ============')
-      console.log(interactObj)
+			console.log('============  tryMakeResizable  ============')
+			console.log(interactObj)
 
 			if (!useStyleCursor) {
 				interactObj.styleCursor(false)

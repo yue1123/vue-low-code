@@ -3,11 +3,12 @@ import type { Emitter } from 'mitt'
 import type { Layout, ItemDragEvent, ItemResizeEvent } from '../types'
 
 export type EmitterEvents = {
-  compact: void
+	compact: void
 	setColNum: number
 	'layout:updateWidth': number
 	'item:dragEvent': ItemDragEvent
 	'item:resizeEvent': ItemResizeEvent
+	updateWidth: number
 }
 
 let emitter: Emitter<EmitterEvents>

@@ -1,4 +1,5 @@
 <template>
+	{{ mergedStyle }}
 	<div ref="layoutGridContainerRef" class="vue_grid-layout" :style="mergedStyle">
 		<slot></slot>
 		<template v-if="isDragging && placeholder">
@@ -25,7 +26,8 @@
 		defineEmits,
 		provide,
 		getCurrentInstance,
-		ref
+		ref,
+		watch
 	} from 'vue'
 	import elementResizeDetector from 'element-resize-detector'
 	// import _debug from 'debug'
@@ -51,7 +53,7 @@
 		LayoutItem,
 		BreakPointsType,
 		ItemDragEvent,
-ItemResizeEvent
+		ItemResizeEvent
 	} from '../../types'
 	import GridItem from '../GridItem'
 	import { diffTwoLayout } from './utils'
@@ -219,9 +221,11 @@ ItemResizeEvent
 	// function resizeEventHandler() {}
 	// sub item drag event handler
 	// function dragEventHandler() {}
-	useEventListener(self, 'resize', handleWindowResize)
-	onBeforeMount(() => vueEmits('layout-before-mount', props.layout))
+	onBeforeMount(() => {
+		vueEmits('layout-before-mount', props.layout)
+	})
 	onMounted(() => {
+		useEventListener(self, 'resize', handleWindowResize)
 		vueEmits('layout-mounted', props.layout)
 
 		// init
@@ -235,8 +239,8 @@ ItemResizeEvent
 
 				handleWindowResize()
 
-				//self.width = self.$el.offsetWidth;
-				// addWindowEventListener('resize', self.onWindowResize)
+				width = layoutGridContainerRef.value!.offsetWidth
+        emit('layout:updateWidth', width)
 
 				compact(props.layout, props.verticalCompact)
 
@@ -266,8 +270,20 @@ ItemResizeEvent
 			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
 		}
 	})
+
+	// watch
+	watch(
+		() => props.layout,
+		() => {
+			console.log('123333333333333333333')
+			layoutUpdate()
+		}
+	)
+	//
+
 	provide('parentLayoutProps', props)
 	provide('parentLayoutInstance', getCurrentInstance())
+	provide('parentLayoutContainerWidthGetter', () => width)
 
 	// init
 	;(function init() {
@@ -281,11 +297,13 @@ ItemResizeEvent
 		layouts = Object.assign({}, props.responsiveLayouts)
 	}
 	// window resize handler
-	function handleWindowResize() {}
+	function handleWindowResize() {
+		// TODO: window resize case
+	}
 	function updateHeight() {
 		if (!props.autoResize) return
 		let { rowHeight, margin, layout } = props
-		mergedStyle = Object.assign(mergedStyle, {
+		mergedStyle.value = Object.assign(mergedStyle.value, {
 			// FIXME: handle margin four value case
 			height: bottom(layout) * (rowHeight + margin[1]) + margin[1] + 'px'
 		})
