@@ -1,7 +1,4 @@
 import GridLayout from './components/GridLayout/index'
-// import GridItem from './components/GridItem/index'
+import GridItem from './components/GridItem/index'
 
-export {
-	GridLayout
-	//  GridItem
-}
+export { GridLayout, GridItem }

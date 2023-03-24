@@ -1,4 +1,4 @@
-import type { Layout } from '@/types'
+import type { Layout } from '@types'
 export function diffTwoLayout(layout1: Layout, layout2: Layout) {
 	//Find values that are in result1 but not in result2
 	let uniqueResultOne = layout1.filter(function (obj) {

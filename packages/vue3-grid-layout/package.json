@@ -4,34 +4,27 @@
 	"description": "vue-grid-layout rewritten by vue3",
 	"main": "src/index.ts",
 	"types": "src/index.ts",
-	"exports": {
-		".": {
-			"import": "src/index.ts"
-		},
-		"*": "*"
-	},
 	"scripts": {
 		"clean": "rimraf es dist",
-		"dev": "rollup -c --environment NODE_ENV:development --bundleConfigAsCjs -w",
-		"build": "pnpm clean && rollup -c --bundleConfigAsCjs --environment NODE_ENV:production"
+		"dev": "pnpm clean && vue-tsc -p tsconfig.build.json && rollup -c --environment NODE_ENV:development --bundleConfigAsCjs -w",
+		"build": "pnpm clean && vue-tsc -p tsconfig.build.json && rollup -c --bundleConfigAsCjs --environment NODE_ENV:production",
+		"build:vite": "vue-tsc --noEmit && vite build"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"@interactjs/actions": "^1.10.17",
-		"@interactjs/auto-scroll": "^1.10.17",
-		"@interactjs/auto-start": "^1.10.17",
-		"@interactjs/dev-tools": "^1.10.17",
-		"@interactjs/interactjs": "^1.10.17",
-		"@interactjs/modifiers": "^1.10.17",
 		"element-resize-detector": "^1.2.4",
+		"interactjs": "^1.10.17",
 		"mitt": "^3.0.0",
 		"vue": "^3.2.47"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.21.3",
 		"@interactjs/types": "^1.10.17",
 		"@rollup/plugin-alias": "^4.0.3",
+		"@rollup/plugin-babel": "^6.0.3",
+		"@rollup/plugin-commonjs": "^24.0.1",
 		"@rollup/plugin-node-resolve": "^15.0.1",
 		"@types/debug": "^4.1.7",
 		"@types/element-resize-detector": "^1.1.3",

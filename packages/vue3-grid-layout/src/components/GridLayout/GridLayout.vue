@@ -40,8 +40,8 @@
 		getAllCollisions,
 		moveElement,
 		validateLayout
-	} from '@utils'
-	import { usePubSub, useEventListener } from '@hooks'
+	} from '../../utils'
+	import { usePubSub, useEventListener } from '../../hooks'
 	import type {
 		Layout,
 		BreakPoints,
@@ -52,7 +52,7 @@
 		BreakPointsType,
 		ItemDragEvent,
 ItemResizeEvent
-	} from '@types'
+	} from '../../types'
 	import GridItem from '../GridItem'
 	import { diffTwoLayout } from './utils'
 	export interface GridLayoutProps {
@@ -266,8 +266,8 @@ ItemResizeEvent
 			elementResizeDetectorInstance.uninstall(layoutGridContainerRef.value)
 		}
 	})
-	provide('parentLayoutPropsGetter', props)
-	provide('parentLayoutInstanceGetter', getCurrentInstance())
+	provide('parentLayoutProps', props)
+	provide('parentLayoutInstance', getCurrentInstance())
 
 	// init
 	;(function init() {

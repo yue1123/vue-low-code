@@ -1,21 +1,27 @@
-const path = require('path')
-const { defineConfig } = require('rollup')
-const nodeResolve = require('@rollup/plugin-node-resolve').default
-const postcss = require('rollup-plugin-postcss')
-const autoprefixer = require('autoprefixer')
-const vue = require('rollup-plugin-vue')
-const typescript = require('rollup-plugin-typescript2')
-const esbuild = require('rollup-plugin-esbuild').default
-// import pkg from './package.json'
-const alias = require('@rollup/plugin-alias')
+import path from 'node:path'
+import { defineConfig } from 'rollup'
+import nodeResolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
+import babel from '@rollup/plugin-babel'
+import postcss from 'rollup-plugin-postcss'
+import autoprefixer from 'autoprefixer'
+import vue from 'rollup-plugin-vue'
+import typescript from 'rollup-plugin-typescript2'
+// import esbuild from 'rollup-plugin-esbuild'
+import pkg from './package.json'
+import alias from '@rollup/plugin-alias'
 // import dts from 'rollup-plugin-dts'
 // import replace from '@rollup/plugin-replace'
 
+const root = process.cwd()
+const dep = Object.keys(pkg.dependencies)
+
 const baseConfig = defineConfig({
-	external(id) {
-		if (id === 'vue') return true
-		// if (id === 'index.vue' || id === './components/index') return false
-	},
+	external: dep,
+	// external(id) {
+	// 	if (id === 'vue') return true
+	// 	if (id === 'index.vue' || id === './components/index') return false
+	// },
 	input: path.resolve('./src/index.ts'),
 	plugins: [
 		// replace({
@@ -24,11 +30,19 @@ const baseConfig = defineConfig({
 		// 	},
 		// 	preventAssignment: true
 		// }),
-		// nodeResolve(),
-		alias({
-			entries: [{ find: '@', replacement: path.resolve('./src/') }]
+		nodeResolve(),
+		typescript(),
+		commonjs(),
+		babel({
+			babelHelpers: 'runtime',
+			exclude: /node_modules/,
+			presets: ['@babel/preset-env'],
+			plugins: [['@babel/plugin-transform-runtime', { useESModules: true }]]
 		}),
-		esbuild(),
+		// alias({
+		// 	entries: [{ find: /^@(.*)/, replacement: path.resolve('./src/$1/index.ts') }]
+		// }),
+		// esbuild(),
 		vue()
 	],
 	output: {
@@ -53,4 +67,21 @@ const cssBuild = defineConfig({
 	]
 })
 
-export default [baseConfig, cssBuild]
+// const dtsBuild = defineConfig({
+// 	input: path.resolve('./es/src/index.d.ts'),
+// 	output: { file: 'dist/index.d.ts' },
+// 	external: () => false,
+// 	plugins: [
+// 		nodeResolve(),
+// 		dts(),
+// 		alias({
+// 			entries: [{ find: '@', replacement: path.resolve('./es/src/') }]
+// 		})
+// 	]
+// })
+
+export default [
+	baseConfig,
+	cssBuild
+	//  dtsBuild
+]

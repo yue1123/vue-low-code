@@ -1,4 +1,4 @@
-import type { Layout, LayoutItem, CssStyle } from '@/types'
+import type { Layout, LayoutItem, CssStyle } from '@types'
 
 /**
  * Return the bottom coordinate of the layout.

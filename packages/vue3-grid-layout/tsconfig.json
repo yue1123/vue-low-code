@@ -7,8 +7,9 @@
 		"resolveJsonModule": true,
 		"rootDir": ".",
 		"baseUrl": "./",
+		"types": ["node"],
 		"paths": {
-      "@*": ["src/*"]
+			"@*": ["src/*"]
 		}
 	}
 }

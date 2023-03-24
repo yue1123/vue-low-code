@@ -1,5 +1,5 @@
 import { cloneLayout, compact, correctBounds } from './core'
-import type { Layout, BreakPointsType, BreakPoints } from '@types'
+import type { Layout, BreakPointsType, BreakPoints } from '../types'
 export type ResponsiveLayout = { lg?: Layout; md?: Layout; sm?: Layout; xs?: Layout; xxs?: Layout }
 
 /**
@@ -109,6 +109,6 @@ export function generateResponsiveLayout(
  * @return {Array}              Sorted breakpoints.
  */
 export function sortBreakpoints(breakpoints: BreakPoints): BreakPointsType[] {
-	const keys = Object.keys(breakpoints) as (keyof BreakPoints)[] 
+	const keys = Object.keys(breakpoints) as (keyof BreakPoints)[]
 	return keys.sort((a, b) => breakpoints[a] - breakpoints[b])
 }

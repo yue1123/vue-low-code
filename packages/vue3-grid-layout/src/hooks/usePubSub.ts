@@ -1,6 +1,6 @@
 import mitt from 'mitt'
 import type { Emitter } from 'mitt'
-import type { Layout, ItemDragEvent, ItemResizeEvent } from '@types'
+import type { Layout, ItemDragEvent, ItemResizeEvent } from '../types'
 
 export type EmitterEvents = {
   compact: void
