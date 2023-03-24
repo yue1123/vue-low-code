@@ -30,36 +30,98 @@
 	// import type {GridLayoutProps} from '@components/GridLayout'
 
 	export interface GridItemProps {
+    /**
+     * 标识栅格元素位于第几列，需为自然数。
+     */
+    x: number
+    /**
+     * 标识栅格元素位于第几行，需为自然数
+     */
+    y: number
+    /**
+     * 标识栅格元素的初始宽度，值为 colWidth 的倍数。
+     */
+    w: number
+    /**
+     * 标识栅格元素的初始高度，值为 rowHeight 的倍数
+     */
+    h: number
+    /**
+     * 栅格中元素的ID
+     */
+    i: string
+    /**
+     * 栅格元素的最小宽度，值为colWidth的倍数。
+     * 如果w小于minW，则minW的值会被w覆盖。
+     */
+    minW?: number
+    /**
+     * 栅格元素的最小高度，值为 rowHeight 的倍数。如果 h 小于 minH，则 minH 的值会被 h 覆盖。
+     */
+    minH?: number
+    /**
+     * 栅格元素的最大宽度，值为 colWidth的 倍数。如果 w 大于 maxW，则 maxW 的值会被 w 覆盖
+     */
+    maxW?: number
+    /**
+     * 栅格元素的最大高度，值为 rowHeight 的倍数。如果 h 大于 maxH，则 maxH 的值会被 h 覆盖
+     */
+    maxH?: number
+    /**
+     * 标识栅格元素是否可拖拽。如果值为 null 则取决于父容器
+     */
 		isDraggable?: boolean
+    /**
+     * 标识栅格元素是否可调整大小。如果值为 null 则取决于父容器
+     */
 		isResizable?: boolean
+    /**
+     * 标识栅格元素是否为静态的（无法拖拽、调整大小或被其他元素移动）
+     */
+    static?: boolean
+    /**
+     * 标识栅格元素中哪些子元素无法触发拖拽事件，值为 css-like 选择器
+     */
+    dragIgnoreFrom?: string
+    /**
+     * 标识栅格元素中哪些子元素可以触发拖拽事件，值为 css-like 选择器。如果值为 null 则表示所有子元素（dragIgnoreFrom 的除外）。
+     */
+    dragAllowFrom?: string
+    /**
+     * 标识栅格元素中哪些子元素无法触发调整大小的事件，值为 css-like 选择器。
+     */
+    resizeIgnoreFrom?: string
+    /**
+     * Says if the item is bounded to the container when dragging. If default value is null then it's inherited from parent.
+     */
 		isBounded?: boolean
-		static?: boolean
-		minH?: number
-		minW?: number
-		maxH?: number
-		maxW?: number
-		x: number
-		y: number
-		w: number
-		h: number
-		i: string
-		dragIgnoreFrom?: string
-		dragAllowFrom?: string | null
-		resizeIgnoreFrom?: string
+    /**
+     * If 'true', forces the GridItem to preserve its aspect ratio when resizing.
+     */
 		preserveAspectRatio?: boolean
+    /**
+     * Passthrough object for the grid item interact.js draggable configuration
+     */
 		dragOption?: Record<string, any>
+    /**
+     * Passthrough object for the grid item interact.js resizable configuration
+     */
 		resizeOption?: Record<string, any>
 	}
 	const { on, off, emit } = usePubSub()
 	const props = withDefaults(defineProps<GridItemProps>(), {
 		minH: 1,
 		minW: 1,
-		isDraggable: undefined,
 		maxH: Infinity,
 		maxW: Infinity,
+    isDraggable: undefined,
+    isResizable: undefined,
+    static: false,
 		dragIgnoreFrom: 'a, button',
-		dragAllowFrom: null,
+		dragAllowFrom: undefined,
 		resizeIgnoreFrom: 'a, button',
+    isBounded: undefined,
+    preserveAspectRatio: false,
 		dragOption: () => ({}),
 		resizeOption: () => ({})
 	})
@@ -315,17 +377,17 @@
 		compact()
 	}
 	function setDraggableHandler(isDraggable: boolean) {
-		if (props.isDraggable === null) {
+		if (props.isDraggable === undefined) {
 			draggable.value = isDraggable
 		}
 	}
 	function setResizableHandler(isResizable: boolean) {
-		if (props.isResizable === null) {
+		if (props.isResizable === undefined) {
 			resizable.value = isResizable
 		}
 	}
 	function setBoundedHandler(isBounded: boolean) {
-		if (props.isBounded === null) {
+		if (props.isBounded === undefined) {
 			bounded = isBounded
 		}
 	}
