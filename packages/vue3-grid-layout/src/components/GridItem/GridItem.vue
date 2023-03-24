@@ -1,19 +1,13 @@
 <template>
 	<div ref="itemRef" class="vue-grid-item" :class="classObj" :style="style">
 		<slot />
+		{{ resizableHandleClass }}
 		<span v-if="resizableAndNotStatic" ref="handle" :class="resizableHandleClass" />
 	</div>
 </template>
 <script setup lang="ts">
 	import { ref, inject, computed, useSlots, onBeforeUnmount, onMounted, watch } from 'vue'
-	import type { Component } from 'vue'
-	// import '@interactjs/auto-start'
-	// import '@interactjs/auto-scroll'
-	// import '@interactjs/actions/drag'
-	// import '@interactjs/actions/resize'
-	// import '@interactjs/modifiers'
 	import interact from 'interactjs'
-	// import interact from '@interactjs/interact'
 
 	import {
 		setTopLeft,
@@ -808,7 +802,10 @@
 				interactObj.styleCursor(false)
 			}
 		}
-
+		console.log(
+			resizable.value && !props.static,
+			'resizable.value && !props.staticasd=============='
+		)
 		if (resizable.value && !props.static) {
 			let maximum = calcPosition(0, 0, props.maxW, props.maxH)
 			let minimum = calcPosition(0, 0, props.minW, props.minH)
@@ -836,7 +833,7 @@
 			if (props.preserveAspectRatio) {
 				opts.modifiers = [(interact as any).modifiers.aspectRatio({ ratio: 'preserve' })]
 			}
-
+			console.log('interactObj.resizable(opts)7777777777777777777777777777777', opts)
 			interactObj.resizable(opts)
 
 			if (!resizeEventSet) {

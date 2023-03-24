@@ -1,6 +1,6 @@
 <template>
 	{{ mergedStyle }}
-	<div ref="layoutGridContainerRef" class="vue_grid-layout" :style="mergedStyle">
+	<div v-bind="$attrs" ref="layoutGridContainerRef" class="vue_grid-layout" :style="mergedStyle">
 		<slot></slot>
 		<template v-if="isDragging && placeholder">
 			<GridItem
@@ -240,7 +240,7 @@
 				handleWindowResize()
 
 				width = layoutGridContainerRef.value!.offsetWidth
-        emit('layout:updateWidth', width)
+				emit('layout:updateWidth', width)
 
 				compact(props.layout, props.verticalCompact)
 
