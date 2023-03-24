@@ -687,7 +687,9 @@
 			}
 		}
 
-		if (draggable.value && props.static) {
+    console.log('%cGridItem.vue:690%cdraggable', 'background:#03186d; color: #fff;padding:2px 4px;border-radius:2px 0 0 2px', 'background: #496cf6; color: #fff;padding:2px 4px;border-radius:0 2px 2px 0', draggable.value)
+    // debugger
+		if (draggable.value && !props.static) {
 			const opts = {
 				ignoreFrom: props.dragIgnoreFrom,
 				allowFrom: props.dragAllowFrom,
@@ -709,13 +711,15 @@
 	function tryMakeResizable() {
 		if (interactObj === null || interactObj === undefined) {
 			interactObj = interact(itemRef.value)
+      console.log('============  tryMakeResizable  ============')
+      console.log(interactObj)
 
 			if (!useStyleCursor) {
 				interactObj.styleCursor(false)
 			}
 		}
 
-		if (resizable.value && props.static) {
+		if (resizable.value && !props.static) {
 			let maximum = calcPosition(0, 0, props.maxW, props.maxH)
 			let minimum = calcPosition(0, 0, props.minW, props.minH)
 			const opts: Record<string, any> = {

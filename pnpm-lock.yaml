@@ -38,12 +38,6 @@ importers:
   packages/vue3-grid-layout:
     specifiers:
       '@babel/core': ^7.21.3
-      '@interactjs/actions': ^1.10.17
-      '@interactjs/auto-scroll': ^1.10.17
-      '@interactjs/auto-start': ^1.10.17
-      '@interactjs/dev-tools': ^1.10.17
-      '@interactjs/interactjs': ^1.10.17
-      '@interactjs/modifiers': ^1.10.17
       '@interactjs/types': ^1.10.17
       '@rollup/plugin-alias': ^4.0.3
       '@rollup/plugin-babel': ^6.0.3
@@ -74,13 +68,8 @@ importers:
       vue: ^3.2.47
       vue-tsc: ^1.0.24
     dependencies:
-      '@interactjs/actions': 1.10.17
-      '@interactjs/auto-scroll': 1.10.17
-      '@interactjs/auto-start': 1.10.17
-      '@interactjs/dev-tools': 1.10.17_cn5slzagijafj3kjb52cs5znym
-      '@interactjs/interactjs': 1.10.17
-      '@interactjs/modifiers': 1.10.17
       element-resize-detector: 1.2.4
+      interactjs: 1.10.17
       mitt: 3.0.0
       vue: 3.2.47
     devDependencies:
@@ -98,7 +87,6 @@ importers:
       cssnano: 5.1.15
       debug: 4.3.4
       esbuild: 0.17.12
-      interactjs: 1.10.17
       rimraf: 4.4.0
       rollup: 3.19.1
       rollup-plugin-dts: 5.3.0_h4kaxwm6ctjivrsm4cpxaz7nqu
@@ -788,14 +776,6 @@ packages:
 
   /@interactjs/arrange/1.10.2:
     resolution: {integrity: sha512-pPLA9o4RWMFN0VfalklOFSRLL4WqqXcD9no4XEuqV00goZPCxLBbMTztaWwnutlRy7evtOhUjUH+pZVsS+dZ4Q==}
-    dev: false
-
-  /@interactjs/auto-scroll/1.10.17:
-    resolution: {integrity: sha512-IQcW7N3xOaoL8RnAGOGMk0Y2gue7L4S3BT6Id4VBBu8so163DtLiZVW6jXu9rKVntzbluaAeqNZlfAVyu3kIWg==}
-    peerDependencies:
-      '@interactjs/utils': 1.10.17
-    optionalDependencies:
-      '@interactjs/interact': 1.10.17
     dev: false
 
   /@interactjs/auto-scroll/1.10.17_@interactjs+utils@1.10.17:
@@ -2184,6 +2164,7 @@ packages:
     resolution: {integrity: sha512-grjHJgnWkCoQLmAlk2yalNd1r0ztUhXLJNVjSOfWn1wfNNgU2tx1cDEkro9WYerDNC9UG3MZTeD4O6zOM5gbIA==}
     dependencies:
       '@interactjs/types': 1.10.17
+    dev: false
 
   /is-binary-path/2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
