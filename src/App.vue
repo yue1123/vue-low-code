@@ -67,7 +67,7 @@
 			x: 0,
 			y: 0,
 			w: 2,
-			h: 2,
+			h: 5,
 			i: '0',
 			resizable: true,
 			draggable: true,
