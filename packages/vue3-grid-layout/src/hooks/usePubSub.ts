@@ -5,9 +5,15 @@ import type { Layout, ItemDragEvent, ItemResizeEvent } from '../types'
 export type EmitterEvents = {
 	compact: void
 	setColNum: number
+	setRowHeight: number
+	setDraggable: boolean
+	setResizable: boolean
+	setBounded: boolean
+	setTransformScale: number
+	setMaxRows: number
 	'layout:updateWidth': number
 	'item:dragEvent': ItemDragEvent
-	'item:resizeEvent': ItemResizeEvent
+	'item:resizeEvent'?: ItemResizeEvent
 	updateWidth: number
 }
 

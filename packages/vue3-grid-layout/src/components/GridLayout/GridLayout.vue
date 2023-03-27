@@ -209,9 +209,9 @@
 	let lastLayoutLength: number = 0
 	// breakpoints
 	let lastBreakpoint: BreakPointsType | null = null // store last active breakpoint
-	let originalLayout: Layout | null = null
+	let originalLayout = ref<Layout | null>(null)
 	// window width
-	let width = 0
+	let width = ref<number|null>(null)
 	// responsive layouts
 	// FIXME: rename
 	let layouts: any = null
@@ -233,14 +233,14 @@
 			// FIXME: ???
 			// validateLayout(props.layout)
 
-			originalLayout = props.layout
+			originalLayout.value = props.layout
 			nextTick(function () {
 				initResponsiveFeatures()
 
 				handleWindowResize()
 
-				width = layoutGridContainerRef.value!.offsetWidth
-				emit('layout:updateWidth', width)
+				width.value = layoutGridContainerRef.value!.offsetWidth
+				emit('layout:updateWidth', width.value)
 
 				compact(props.layout, props.verticalCompact)
 
@@ -272,14 +272,89 @@
 	})
 
 	// watch
+
+  watch(width, (newVal, oldVal) => {
+    nextTick(() => {
+      emit('updateWidth', newVal??0)
+      if (oldVal === null) {
+        nextTick(() => {
+          vueEmits('layout-ready', props.layout)
+        })
+      }
+      updateHeight()
+    })
+  })
 	watch(
 		() => props.layout,
 		() => {
-			console.log('123333333333333333333')
 			layoutUpdate()
 		}
 	)
-	//
+  watch(
+      () => props.layout.length,
+      () => {
+        layoutUpdate()
+      }
+  )
+  watch(
+      () => props.colNum,
+      val => {
+        emit('setColNum', val)
+      }
+  )
+  watch(
+      () => props.rowHeight,
+      val => {
+        emit('setRowHeight', val)
+      }
+  )
+  watch(
+      () => props.isDraggable,
+      val => {
+        emit('setDraggable', val)
+      }
+  )
+  watch(
+      () => props.isResizable,
+      val => {
+        emit('setResizable', val)
+      }
+  )
+  watch(
+      () => props.isBounded,
+      val => {
+        emit('setBounded', val)
+      }
+  )
+  watch(
+      () => props.transformScale,
+      val => {
+        emit('setTransformScale', val)
+      }
+  )
+  watch(
+      () => props.responsive,
+      val => {
+        if (!val) {
+          vueEmits("update:layout", originalLayout.value || [])
+          emit("setColNum", props.colNum)
+        }
+        onWindowResize()
+      }
+  )
+  watch(
+      () => props.maxRows,
+      val => {
+        emit("setMaxRows", val)
+      }
+  )
+  watch(
+      () => props.margin,
+      () => {
+        updateHeight()
+      }
+  )
+  //
 
 	provide('parentLayoutProps', props)
 	provide('parentLayoutInstance', getCurrentInstance())
@@ -311,7 +386,7 @@
 	// finds or generates new layouts for set breakpoints
 	function responsiveGridLayout() {
 		const { breakpoints, cols, layout: userLayout, verticalCompact } = props
-		let newBreakpoint = getBreakpointFromWidth(breakpoints, width)
+		let newBreakpoint = getBreakpointFromWidth(breakpoints, width.value??0)
 		let newCols = getColsFromBreakpoint(newBreakpoint, cols)
 
 		// save actual layout in layouts
@@ -322,7 +397,7 @@
 		// Find or generate a new layout.
 		let layout = findOrGenerateResponsiveLayout(
 			// @ts-ignore
-			originalLayout!,
+			originalLayout.value!,
 			layouts,
 			breakpoints,
 			newBreakpoint,
@@ -348,16 +423,16 @@
 	}
 	function layoutUpdate() {
 		const { layout, verticalCompact } = props
-		if (layout !== undefined && originalLayout !== null) {
-			if (layout.length !== originalLayout.length) {
-				debug('### LAYOUT UPDATE!', layout.length, originalLayout.length)
+		if (layout !== undefined && originalLayout.value !== null) {
+			if (layout.length !== originalLayout.value.length) {
+				debug('### LAYOUT UPDATE!', layout.length, originalLayout.value.length)
 
-				let diff = diffTwoLayout(layout, originalLayout)
+				let diff = diffTwoLayout(layout, originalLayout.value)
 				if (diff.length > 0) {
-					if (layout.length > originalLayout.length) {
-						originalLayout = originalLayout.concat(diff)
+					if (layout.length > originalLayout.value.length) {
+						originalLayout.value = originalLayout.value.concat(diff)
 					} else {
-						originalLayout = originalLayout.filter((obj) => {
+						originalLayout.value = originalLayout.value.filter((obj) => {
 							return !diff.some((obj2) => {
 								return obj.i === obj2.i
 							})
@@ -370,13 +445,14 @@
 			}
 
 			compact(layout, verticalCompact)
-			emit('layout:updateWidth', width)
+			emit('layout:updateWidth', width.value!)
 			updateHeight()
 
 			vueEmits('layout-updated', layout)
 		}
 	}
-	function handleResizeEvent({ eventName, i, x, y, h, w }: ItemResizeEvent) {
+	function handleResizeEvent(data?: ItemResizeEvent) {
+    const { eventName = '', i = '', x = 0, y = 0, h = 0, w = 0 } = data || {}
 		const { layout, preventCollision, responsive } = props
 		let currentResizeLayoutItem = getLayoutItem(layout, i)
 		// GetLayoutItem sometimes return null object
@@ -428,7 +504,7 @@
 			nextTick(() => {
 				isDragging.value = true
 			})
-			emit('layout:updateWidth', width)
+			emit('layout:updateWidth', width.value??0)
 		} else {
 			nextTick(function () {
 				isDragging.value = false
@@ -443,7 +519,8 @@
 
 		if (eventName === 'resizeend') vueEmits('layout-updated', layout)
 	}
-	function handleDragEvent({ eventName, i, x, y, h, w }: ItemDragEvent) {
+	function handleDragEvent(data?: ItemDragEvent) {
+    const { eventName = '', i = '', x = 0, y = 0, h = 0, w = 0 } = data || {}
 		debug(eventName + ' id=' + i + ', x=' + x + ', y=' + y)
 		const { layout, restoreOnDrag, verticalCompact, preventCollision } = props
 		let currentDragLayoutItem = getLayoutItem(layout, i)
@@ -472,7 +549,7 @@
 			nextTick(() => {
 				isDragging.value = true
 			})
-			emit('layout:updateWidth', width)
+			emit('layout:updateWidth', width.value??0)
 		} else {
 			nextTick(function () {
 				isDragging.value = false
@@ -501,6 +578,13 @@
 			vueEmits('layout-updated', _layout)
 		}
 	}
+
+  function onWindowResize() {
+    if (layoutGridContainerRef.value !== null && layoutGridContainerRef.value !== undefined) {
+      width.value = layoutGridContainerRef.value.offsetWidth
+    }
+    emit("item:resizeEvent")
+  }
 </script>
 <script lang="ts">
 	export default {
