@@ -5,6 +5,27 @@
 			<Main v-else />
 		</div>
 	</NMessageProvider> -->
+  <button @click="decreaseWidth">Decrease Width</button>
+  <button @click="increaseWidth">Increase Width</button>
+  <button @click="scaleHalf">Scale x0.5</button>
+  <button @click="scaleThreeQuarters">Scale x0.75</button>
+  <button @click="scaleIdentity">Scale x1.0</button>
+  <button @click="addItem">Add an item</button>
+  <button @click="addItemDynamically">Add an item dynamically</button>
+  <!-- Add to show rtl support -->
+  <button @click="changeDirection">Change Direction</button>
+  <input type="checkbox" v-model="draggable"/> Draggable
+  <input type="checkbox" v-model="resizable"/> Resizable
+  <input type="checkbox" v-model="mirrored"/> Mirrored
+  <input type="checkbox" v-model="bounded"/> Bounded
+  <input type="checkbox" v-model="responsive"/> Responsive
+  <input type="checkbox" v-model="preventCollision"/> Prevent Collision
+  <input type="checkbox" v-model="compact"/> Vertical Compact
+  <div style="margin-top: 10px;margin-bottom: 10px;">
+    Row Height: <input type="number" v-model="rowHeight"/> Col nums: <input type="number" v-model="colNum"/>
+    Margin x: <input type="number" v-model="marginX"/> Margin y: <input type="number" v-model="marginY"/>
+  </div>
+
 	<GridLayout
 		class="previewContainer"
 		style="height: 1850px"
@@ -53,7 +74,7 @@
 			@container-resized="containerResized"
 			@moved="moved"
 		>
-			{{ item }}
+			{{ item.i }}
 		</GridItem>
 		<!-- </template> -->
 	</GridLayout>
@@ -412,7 +433,14 @@
 	.previewContainer {
 		width: 100%;
 		height: calc(100vh - 65px);
-		background-image: radial-gradient(#ccc 1px, rgb(255, 255, 255) 1px);
-		background-size: 20px 20px;
+		//background-image: radial-gradient(#ccc 1px, rgb(255, 255, 255) 1px);
+    background-size: calc(calc(100% - 5px) / v-bind(colNum)) 40px;
+    background-image: linear-gradient(
+      to right,
+      lightgrey 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+		//background-size: 20px 20px;
 	}
 </style>
