@@ -1,7 +1,6 @@
 <template>
 	<div ref="itemRef" class="vue-grid-item" :class="classObj" :style="style">
 		<slot />
-		{{ resizableAndNotStatic }}
 		<span v-if="resizableAndNotStatic" ref="handle" :class="resizableHandleClass" />
 	</div>
 </template>
@@ -422,7 +421,6 @@
 		let _style
 
 		if (useCssTransforms.value) {
-			console.log('--------------')
 			if (renderRtl.value) {
 				_style = setTransformRtl(pos.top, pos.right!, pos.width, pos.height)
 			} else {
@@ -437,7 +435,6 @@
 		}
 
 		style.value = _style
-		console.log(style, 'style')
 	}
 	function emitContainerResized() {
 		let styleProps: {
@@ -525,7 +522,6 @@
 			vueEmits('resized', props.i, pos.h, pos.w, newSize.height, newSize.width)
 		}
 
-		// emit('resizeEvent', event.type, props.i, innerX, innerY, pos.h, pos.w)
 		emit('item:resizeEvent', {
 			eventName: event.type,
 			i: props.i,
@@ -588,8 +584,6 @@
 					newPosition.left = cLeft - pLeft
 				}
 				newPosition.top = cTop - pTop
-				//                        console.log("### drag end => " + JSON.stringify(newPosition));
-				//                        console.log("### DROP: " + JSON.stringify(newPosition));
 				dragging.value = null
 				isDragging.value = false
 				// shouldUpdate = true;
@@ -647,7 +641,6 @@
 	}
 	function calcPosition(x: number, y: number, w: number, h: number) {
 		const colWidth = calcColWidth()
-		console.log('====', colWidth, x, y, w, h)
 		let out: {
 			top: number
 			right?: number
@@ -660,7 +653,6 @@
 			height: 0
 		}
 		const { margin } = parentLayoutProps
-		console.log(renderRtl.value)
 		if (renderRtl.value) {
 			out = {
 				right: Math.round(colWidth * x + (x + 1) * margin[0]),
@@ -690,7 +682,6 @@
 						: Math.round(rowHeight.value * h + Math.max(0, h - 1) * margin[1])
 			}
 		}
-		console.log(out, 'out')
 		return out
 	}
 	function calcXY(top: number, left: number) {
@@ -708,7 +699,6 @@
 	}
 	function calcColWidth() {
 		const { margin } = parentLayoutProps
-		console.log(containerWidth.value, 'containerWidth.value')
 		return (containerWidth.value - margin[0] * (cols.value + 1)) / cols.value
 	}
 	function calcGridItemWHPx(gridUnits: number, colOrRowSize: number, marginPx: number) {
@@ -755,22 +745,12 @@
 				interactObj.styleCursor(false)
 			}
 		}
-
-		console.log(
-			'%cGridItem.vue:690%cdraggable',
-			'background:#03186d; color: #fff;padding:2px 4px;border-radius:2px 0 0 2px',
-			'background: #496cf6; color: #fff;padding:2px 4px;border-radius:0 2px 2px 0',
-			draggable.value
-		)
-		// debugger
-		console.log(draggable.value, !props.static, 'draggable.value && !props.static')
 		if (draggable.value && !props.static) {
 			const opts = {
 				ignoreFrom: props.dragIgnoreFrom,
 				allowFrom: props.dragAllowFrom,
 				...props.dragOption
 			}
-			console.log('object', opts, '============fasdfasdffasdfasfd发的发=')
 			interactObj.draggable(opts)
 
 			if (!dragEventSet) {
@@ -786,25 +766,20 @@
 	function tryMakeResizable() {
 		if (interactObj === null || interactObj === undefined) {
 			interactObj = interact(itemRef.value)
-			console.log('============  tryMakeResizable  ============')
-			console.log(interactObj)
 
 			if (!useStyleCursor) {
 				interactObj.styleCursor(false)
 			}
 		}
-		console.log(
-			resizable.value && !props.static,
-			'resizable.value && !props.staticasd=============='
-		)
 		if (resizable.value && !props.static) {
-			let maximum = calcPosition(0, 0, props.maxW, props.maxH)
-			let minimum = calcPosition(0, 0, props.minW, props.minH)
+			const maximum = calcPosition(0, 0, props.maxW, props.maxH)
+			const minimum = calcPosition(0, 0, props.minW, props.minH)
+			const handleClass = '.' + resizableHandleClass.value.trim().replace(' ', '.')
 			const opts: Record<string, any> = {
 				edges: {
 					left: false,
-					right: '.' + resizableHandleClass.value.trim().replace(' ', '.'),
-					bottom: '.' + resizableHandleClass.value.trim().replace(' ', '.'),
+					right: handleClass,
+					bottom: handleClass,
 					top: false
 				},
 				ignoreFrom: props.resizeIgnoreFrom,
@@ -820,11 +795,9 @@
 				},
 				...props.resizeOption
 			}
-
 			if (props.preserveAspectRatio) {
 				opts.modifiers = [(interact as any).modifiers.aspectRatio({ ratio: 'preserve' })]
 			}
-			console.log('interactObj.resizable(opts)7777777777777777777777777777777', opts)
 			interactObj.resizable(opts)
 
 			if (!resizeEventSet) {
